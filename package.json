@@ -1,0 +1,26 @@
+{
+  "name": "redux-api-middleman",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js' -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.9.0",
+    "babel-register": "^6.9.0",
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3",
+    "nock": "^8.0.0",
+    "sinon": "^1.17.4",
+    "sinon-chai": "^2.8.0"
+  },
+  "dependencies": {
+    "bluebird": "^3.4.0",
+    "humps": "^1.1.0",
+    "lodash": "^4.13.1",
+    "superagent": "^2.0.0"
+  }
+}
