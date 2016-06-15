@@ -73,6 +73,7 @@ function createRequestPromise ({
     let deferred = Promise.defer()
 
     function sendRequest () {
+      dispatch(actionWith(apiAction, { type: params.sendingType }))
       superAgent[params.method](params.url)
         .send(params.body)
         .query(params.query)
@@ -139,6 +140,7 @@ function paramsExtractor ({ baseUrl }) {
       query,
       body,
       successType,
+      sendingType,
       errorType,
       afterSuccess,
       afterError
@@ -152,6 +154,7 @@ function paramsExtractor ({ baseUrl }) {
       query,
       body,
       successType,
+      sendingType,
       errorType,
       afterSuccess,
       afterError

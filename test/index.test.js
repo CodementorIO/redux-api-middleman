@@ -25,6 +25,8 @@ describe('Middleware::Api', ()=> {
   describe('when called with [CHAIN_API]', ()=> {
     let successType1 = 'ON_SUCCESS_1'
     let successType2 = 'ON_SUCCESS_2'
+    let sendingType1 = 'ON_SENDING_1'
+    let sendingType2 = 'ON_SENDING_2'
     let errorType2 = 'ON_ERROR_2'
 
     let nockScope1, nockScope2
@@ -53,7 +55,8 @@ describe('Middleware::Api', ()=> {
                 query: { queryKey: 'query-val' },
                 path: path1,
                 afterSuccess: afterSuccess1,
-                successType: successType1
+                successType: successType1,
+                sendingType: sendingType1
               }
             }
           },
@@ -66,6 +69,7 @@ describe('Middleware::Api', ()=> {
                 afterSuccess: afterSuccess2,
                 afterError: afterError2,
                 successType: successType2,
+                sendingType: sendingType2,
                 errorType: errorType2
               }
             }
@@ -107,6 +111,16 @@ describe('Middleware::Api', ()=> {
         promise.then(()=> {
           expect(afterSuccess1).to.have.been.calledWith({ getState })
           expect(afterSuccess2).to.have.been.calledWith({ getState })
+          done()
+        })
+      })
+      it('trigger sendintType for all endpoints', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          expect(dispatch).to.have.been
+            .calledWith({ type: sendingType1, extra1: 'val1' })
+          expect(dispatch).to.have.been
+            .calledWith({ type: sendingType2,  extra2: 'val2' })
           done()
         })
       })
