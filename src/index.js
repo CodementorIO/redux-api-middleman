@@ -139,6 +139,7 @@ function paramsExtractor ({ baseUrl }) {
       path,
       query,
       body,
+      url,
       successType,
       sendingType,
       errorType,
@@ -146,7 +147,7 @@ function paramsExtractor ({ baseUrl }) {
       afterError
     } = callApi
 
-    let url = `${baseUrl}${path}`
+    url = url || `${baseUrl}${path}`
 
     return {
       method,

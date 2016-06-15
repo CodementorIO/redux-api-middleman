@@ -80,17 +80,50 @@ describe('Middleware::Api', ()=> {
 
     function nockRequest1 () {
       return nock(BASE_URL).post(path1)
-                                      .query({ queryKey: 'query-val' })
-                                      .reply(200, response1)
+                           .query({ queryKey: 'query-val' })
+                           .reply(200, response1)
     }
     function nockRequest2 (status = 200) {
       return nock(BASE_URL).get('/the-url/the-id-1')
-                                      .reply(status, response2)
+                           .reply(status, response2)
     }
 
     afterEach(()=> {
       nock.cleanAll()
     })
+
+    describe('when `url` is given in CALL_API', ()=> {
+      let host = 'http://another-host.com'
+      let path = '/the-path'
+      let nockScope
+
+      beforeEach(()=> {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  url: `${host}${path}`,
+                  method: 'get',
+                  successType: successType1
+                }
+              }
+            }]
+        }
+        nockScope = nock(host).get(path).reply(200, response1)
+      })
+      it('takes precedence over path', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+
+        promise.then(()=> {
+          nockScope.done()
+          done()
+        })
+      })
+    })
+
+
     describe('when all API calls are success', ()=> {
       beforeEach(()=> {
         nockScope1 = nockRequest1()
@@ -234,7 +267,6 @@ describe('Middleware::Api', ()=> {
 
     })
   })
-
 
   describe('when action is without CALL_API and CHAIN_API', ()=> {
     it('passes the action to next middleware', ()=> {
