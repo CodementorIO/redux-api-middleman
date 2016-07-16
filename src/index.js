@@ -55,7 +55,7 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
 function actionWith (action, toMerge) {
   let ac = _.cloneDeep(action)
   if (ac[CALL_API]) {
-    ac[CALL_API].delete
+    delete ac[CALL_API]
   }
   return _.merge(ac, toMerge)
 }
@@ -73,7 +73,9 @@ function createRequestPromise ({
     let deferred = Promise.defer()
 
     function sendRequest () {
-      dispatch(actionWith(apiAction, { type: params.sendingType }))
+      if (params.sendingType) {
+        dispatch(actionWith(apiAction, { type: params.sendingType }))
+      }
       superAgent[params.method](params.url)
         .send(params.body)
         .query(params.query)
