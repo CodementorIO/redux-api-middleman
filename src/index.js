@@ -127,7 +127,7 @@ function createRequestPromise ({
       }
       function processAfterSuccess () {
         if (_.isFunction(params.afterSuccess)) {
-          params.afterSuccess({ getState })
+          params.afterSuccess({ getState, dispatch })
         }
       }
     })

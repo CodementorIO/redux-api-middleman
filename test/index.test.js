@@ -142,8 +142,8 @@ describe('Middleware::Api', ()=> {
       it('trigger afterSuccess for all endpoints', (done)=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
         promise.then(()=> {
-          expect(afterSuccess1).to.have.been.calledWith({ getState })
-          expect(afterSuccess2).to.have.been.calledWith({ getState })
+          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch })
+          expect(afterSuccess2).to.have.been.calledWith({ getState, dispatch })
           done()
         })
       })
@@ -174,7 +174,7 @@ describe('Middleware::Api', ()=> {
         nockScope1 = nockRequest1()
         nockScope2 = nockRequest2(400)
       })
-      it("sends request until it's failed", (done)=> {
+      it('sends request until it\'s failed', (done)=> {
         let promise = apiMiddleware({ getState, dispatch })(next)(action)
         promise.then(()=> {
           nockScope1.done()
@@ -190,7 +190,7 @@ describe('Middleware::Api', ()=> {
             type: successType1,
             response: camelizeKeys(response1)
           })
-          expect(afterSuccess1).to.have.been.calledWith({ getState })
+          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch })
           done()
         })
       })
