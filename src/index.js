@@ -1,5 +1,5 @@
 import superAgent from 'superagent'
-import Promise, { using } from 'bluebird'
+import Promise from 'bluebird'
 import _ from 'lodash'
 import { camelizeKeys } from 'humps'
 
@@ -22,33 +22,31 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
       })
     }
 
-    let deferred = Promise.defer()
+    return new Promise((resolve, reject)=> {
+      if (! action[CHAIN_API]) {
+        return next(action)
+      }
 
-    if (! action[CHAIN_API]) {
-      return next(action)
-    }
-
-    let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
-      return createRequestPromise({
-        createCallApiAction,
-        getState,
-        dispatch,
-        errorInterceptor,
-        extractParams
+      let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
+        return createRequestPromise({
+          createCallApiAction,
+          getState,
+          dispatch,
+          errorInterceptor,
+          extractParams
+        })
       })
+
+      let overall = promiseCreators.reduce((promise, createReqPromise)=> {
+        return promise.then((body)=> {
+          return createReqPromise(body)
+        })
+      }, Promise.resolve())
+
+      overall.finally(()=> {
+        resolve()
+      }).catch(()=> {})
     })
-
-    let overall = promiseCreators.reduce((promise, createReqPromise)=> {
-      return promise.then((body)=> {
-        return createReqPromise(body)
-      })
-    }, Promise.resolve())
-
-    overall.finally(()=> {
-      deferred.resolve()
-    }).catch(()=> {})
-
-    return deferred.promise
   }
 }
 
@@ -68,69 +66,71 @@ function createRequestPromise ({
   extractParams
 }) {
   return (prevBody)=> {
+
     let apiAction = createCallApiAction(prevBody)
     let params = extractParams(apiAction[CALL_API])
-    let deferred = Promise.defer()
 
-    function sendRequest () {
-      if (params.sendingType) {
-        dispatch(actionWith(apiAction, { type: params.sendingType }))
+
+    return new Promise((resolve, reject)=> {
+      function sendRequest () {
+        if (params.sendingType) {
+          dispatch(actionWith(apiAction, { type: params.sendingType }))
+        }
+        superAgent[params.method](params.url)
+          .send(params.body)
+          .query(params.query)
+          .end((err, res)=> {
+            function proceedError () {
+              handleError(err)
+            }
+            if (err) {
+              errorInterceptor({
+                proceedError,
+                err,
+                getState,
+                replay: sendRequest
+              })
+            } else {
+              let resBody = camelizeKeys(res.body)
+              dispatchSuccessType(resBody)
+              processAfterSuccess()
+              resolve(resBody)
+            }
+          })
       }
-      superAgent[params.method](params.url)
-        .send(params.body)
-        .query(params.query)
-        .end((err, res)=> {
-          function proceedError () {
-            handleError(err)
-          }
-          if (err) {
-            errorInterceptor({
-              proceedError,
-              err,
-              getState,
-              replay: sendRequest
-            })
-          } else {
-            let resBody = camelizeKeys(res.body)
-            dispatchSuccessType(resBody)
-            processAfterSuccess()
-            deferred.resolve(resBody)
-          }
-        })
-    }
-    sendRequest()
-    return deferred.promise
+      sendRequest()
 
-    function handleError (err) {
-      dispatchErrorType(err)
-      processAfterError()
-      deferred.reject()
-    }
+      function handleError (err) {
+        dispatchErrorType(err)
+        processAfterError()
+        reject()
+      }
 
-    function dispatchErrorType (err) {
-      if ( params.errorType ) {
+      function dispatchErrorType (err) {
+        if ( params.errorType ) {
+          dispatch(actionWith(apiAction, {
+            type: params.errorType,
+            error: err
+          }))
+        }
+      }
+      function processAfterError () {
+        if (_.isFunction(params.afterError)) {
+          params.afterError({ getState })
+        }
+      }
+      function dispatchSuccessType (resBody) {
         dispatch(actionWith(apiAction, {
-          type: params.errorType,
-          error: err
+          type: params.successType,
+          response: resBody
         }))
       }
-    }
-    function processAfterError () {
-      if (_.isFunction(params.afterError)) {
-        params.afterError({ getState })
+      function processAfterSuccess () {
+        if (_.isFunction(params.afterSuccess)) {
+          params.afterSuccess({ getState })
+        }
       }
-    }
-    function dispatchSuccessType (resBody) {
-      dispatch(actionWith(apiAction, {
-        type: params.successType,
-        response: resBody
-      }))
-    }
-    function processAfterSuccess () {
-      if (_.isFunction(params.afterSuccess)) {
-        params.afterSuccess({ getState })
-      }
-    }
+    })
   }
 }
 
