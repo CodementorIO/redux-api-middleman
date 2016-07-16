@@ -212,7 +212,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      function processAfterSuccess() {
 	        if (_lodash2.default.isFunction(params.afterSuccess)) {
-	          params.afterSuccess({ getState: getState });
+	          params.afterSuccess({ getState: getState, dispatch: dispatch });
 	        }
 	      }
 	    });
