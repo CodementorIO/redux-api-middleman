@@ -2,24 +2,29 @@
   "name": "redux-api-middleman",
   "version": "0.0.2",
   "description": "",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
-    "build": "webpack"
+    "test:ci": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js'",
+    "build": "babel src --out-dir lib",
+    "clear": "rm -rf lib/*",
+    "prebuild": "npm run test:ci && npm run clear && npm run build"
   },
-  "author": "",
+  "author": {
+    "name": "YangHsing Lin",
+    "email": "yanghsing.lin@gmail.com"
+  },
   "license": "ISC",
   "devDependencies": {
+    "babel-cli": "^6.10.1",
     "babel-core": "^6.10.4",
-    "babel-loader": "^6.2.4",
     "babel-preset-es2015": "^6.9.0",
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "mocha": "^2.5.3",
     "nock": "^8.0.0",
     "sinon": "^1.17.4",
-    "sinon-chai": "^2.8.0",
-    "webpack": "^1.13.1"
+    "sinon-chai": "^2.8.0"
   },
   "dependencies": {
     "bluebird": "^3.4.0",
