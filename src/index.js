@@ -91,7 +91,7 @@ function createRequestPromise ({
                 replay: sendRequest
               })
             } else {
-              let resBody = camelizeKeys(res.body)
+              let resBody = params.camelizeResponse ? camelizeKeys(res.body) : res.body
               dispatchSuccessType(resBody)
               processAfterSuccess()
               resolve(resBody)
@@ -142,6 +142,7 @@ function paramsExtractor ({ baseUrl }) {
       query,
       body,
       url,
+      camelizeResponse = true,
       successType,
       sendingType,
       errorType,
@@ -160,6 +161,7 @@ function paramsExtractor ({ baseUrl }) {
       sendingType,
       errorType,
       afterSuccess,
+      camelizeResponse,
       afterError
     }
 

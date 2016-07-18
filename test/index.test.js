@@ -38,7 +38,6 @@ describe('Middleware::Api', ()=> {
     let path2 = `/the-url/${response1.id}`
 
     let afterError2
-    let afterError
 
     beforeEach(()=> {
       afterSuccess1 = sinon.stub()
@@ -60,7 +59,7 @@ describe('Middleware::Api', ()=> {
               }
             }
           },
-          (resBody1)=> {
+          (_resBody1)=> {
             return {
               extra2: 'val2',
               [CALL_API]: {
@@ -117,6 +116,41 @@ describe('Middleware::Api', ()=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
 
         promise.then(()=> {
+          nockScope.done()
+          done()
+        })
+      })
+    })
+
+    describe('when `camelizeResponse` is false', ()=> {
+      let path = '/the-path'
+      let nockScope
+
+      beforeEach(()=> {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  path: `${path}`,
+                  method: 'get',
+                  camelizeResponse: false,
+                  successType: successType1
+                }
+              }
+            }]
+        }
+        nockScope = nock(BASE_URL).get(path).reply(200, response1)
+      })
+      it('does not camelize response', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          expect(dispatch).to.have.been
+            .calledWith({
+              type: successType1,
+              response: response1
+            })
           nockScope.done()
           done()
         })
