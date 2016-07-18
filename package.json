@@ -1,6 +1,6 @@
 {
   "name": "redux-api-middleman",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -32,8 +32,5 @@
     "humps": "^1.1.0",
     "lodash": "^4.13.1",
     "superagent": "^2.0.0"
-  },
-  "files": [
-    "lib/"
-  ]
+  }
 }
