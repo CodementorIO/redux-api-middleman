@@ -76,7 +76,12 @@ function createRequestPromise ({
         if (params.sendingType) {
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
-        superAgent[params.method](params.url)
+        let request = superAgent[params.method](params.url)
+        if (_.isFunction(request.withCredentials)) {
+          request = request.withCredentials()
+        }
+
+        request
           .send(params.body)
           .query(params.query)
           .end((err, res)=> {
