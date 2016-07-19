@@ -23,12 +23,12 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
         ]
       })
     }
+    if (! action[CHAIN_API]) {
+      return next(action)
+    }
+
 
     return new Promise((resolve, reject)=> {
-      if (! action[CHAIN_API]) {
-        return next(action)
-      }
-
       let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
         return createRequestPromise({
           createCallApiAction,

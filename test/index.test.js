@@ -304,9 +304,13 @@ describe('Middleware::Api', ()=> {
 
   describe('when action is without CALL_API and CHAIN_API', ()=> {
     it('passes the action to next middleware', ()=> {
+      let nextRetResult = {}
+      next.returns(nextRetResult)
+
       action = { type: 'not-CALL_API' }
-      apiMiddleware({ dispatch, getState })(next)(action)
+      let result = apiMiddleware({ dispatch, getState })(next)(action)
       expect(next).to.have.been.calledWith(action)
+      expect(result).to.equal(nextRetResult)
     })
   })
 
