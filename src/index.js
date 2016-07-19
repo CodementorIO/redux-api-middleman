@@ -6,6 +6,8 @@ import { camelizeKeys } from 'humps'
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
 
+_.noConflict()
+
 let defaultInterceptor = function({ proceedError, err, replay, getState }) {
   proceedError()
 }
