@@ -157,6 +157,61 @@ describe('Middleware::Api', ()=> {
       })
     })
 
+    describe('when generateDefaultParams is provided', ()=> {
+      let path = '/the-path'
+      let nockScope
+      let apiMiddleware
+      let generateDefaultParams
+      beforeEach(()=> {
+        generateDefaultParams = sinon.stub()
+        generateDefaultParams.returns({
+          body: { additionalBodyKey: 'additionalBodyVal' },
+          query: { additionalKey: 'additionalVal' }
+        })
+        apiMiddleware = createApiMiddleware({ baseUrl: BASE_URL, generateDefaultParams })
+      })
+
+      beforeEach(()=> {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  path: `${path}`,
+                  method: 'post',
+                  body: { bodyKey: 'bodyVal' },
+                  successType: successType1
+                }
+              }
+            }]
+        }
+
+        nockScope = nock(BASE_URL)
+          .post(path, {
+            additionalBodyKey: 'additionalBodyVal',
+            bodyKey: 'bodyVal'
+          })
+          .query({
+            additionalKey: 'additionalVal'
+          })
+          .reply(200, response1)
+      })
+      it('merge generateDefaultParams into request', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+
+        promise.then(()=> {
+          expect(dispatch).to.have.been
+            .calledWith({
+              type: successType1,
+              response: camelizeKeys(response1)
+            })
+          nockScope.done()
+          done()
+        })
+      })
+    })
+
 
     describe('when all API calls are success', ()=> {
       beforeEach(()=> {
@@ -289,6 +344,7 @@ describe('Middleware::Api', ()=> {
                 }
               }
             })
+
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
                 expect(superagent.get).to.have.been

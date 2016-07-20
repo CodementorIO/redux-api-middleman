@@ -11,8 +11,12 @@ _.noConflict()
 let defaultInterceptor = function({ proceedError, err, replay, getState }) {
   proceedError()
 }
+let noopDefaultParams = ()=> {
+  return {}
+}
 
-export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
+export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaultParams = noopDefaultParams }) => {
+
   let extractParams = paramsExtractor({ baseUrl })
 
   return ({ dispatch, getState }) => next => action => {
@@ -31,6 +35,7 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
     return new Promise((resolve, reject)=> {
       let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
         return createRequestPromise({
+          generateDefaultParams,
           createCallApiAction,
           getState,
           dispatch,
@@ -47,7 +52,8 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl }) => {
 
       overall.finally(()=> {
         resolve()
-      }).catch(()=> {})
+      })
+      .catch(()=> {})
     })
   }
 }
@@ -61,6 +67,7 @@ function actionWith (action, toMerge) {
 }
 
 function createRequestPromise ({
+  generateDefaultParams,
   createCallApiAction,
   getState,
   dispatch,
@@ -78,14 +85,18 @@ function createRequestPromise ({
         if (params.sendingType) {
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
+        let defaultParams = getExtendedParams()
         let request = superAgent[params.method](params.url)
         if (_.isFunction(request.withCredentials)) {
           request = request.withCredentials()
         }
 
         request
-          .send(params.body)
+          .set(defaultParams.headers)
+          .query(defaultParams.query)
           .query(params.query)
+          .send(defaultParams.body)
+          .send(params.body)
           .end((err, res)=> {
             function proceedError () {
               handleError(err)
@@ -110,7 +121,7 @@ function createRequestPromise ({
       function handleError (err) {
         dispatchErrorType(err)
         processAfterError()
-        reject()
+        reject(err)
       }
 
       function dispatchErrorType (err) {
@@ -136,6 +147,13 @@ function createRequestPromise ({
         if (_.isFunction(params.afterSuccess)) {
           params.afterSuccess({ getState, dispatch })
         }
+      }
+      function getExtendedParams () {
+        let { headers, body, query } = generateDefaultParams({ getState })
+        headers = headers || {}
+        body = body || {}
+        query = query || {}
+        return { headers, body, query }
       }
     })
   }
