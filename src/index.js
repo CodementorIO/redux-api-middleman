@@ -5,6 +5,7 @@ import { camelizeKeys } from 'humps'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
+export const MAX_REPLAY_TIMES = 2
 
 _.noConflict()
 
@@ -78,7 +79,7 @@ function createRequestPromise ({
 
     let apiAction = createCallApiAction(prevBody)
     let params = extractParams(apiAction[CALL_API])
-
+    let replayTimes = 0
 
     return new Promise((resolve, reject)=> {
       function sendRequest () {
@@ -102,12 +103,21 @@ function createRequestPromise ({
               handleError(err)
             }
             if (err) {
-              errorInterceptor({
-                proceedError,
-                err,
-                getState,
-                replay: sendRequest
-              })
+
+              if (replayTimes === MAX_REPLAY_TIMES) {
+                handleError(
+                  new Error(`reached MAX_REPLAY_TIMES = ${MAX_REPLAY_TIMES}`)
+                )
+              } else {
+                replayTimes += 1
+                errorInterceptor({
+                  proceedError,
+                  err,
+                  getState,
+                  replay: sendRequest
+                })
+              }
+
             } else {
               let resBody = params.camelizeResponse ? camelizeKeys(res.body) : res.body
               dispatchSuccessType(resBody)
