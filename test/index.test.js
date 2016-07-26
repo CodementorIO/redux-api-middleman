@@ -231,8 +231,8 @@ describe('Middleware::Api', ()=> {
       it('trigger afterSuccess for all endpoints', (done)=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
         promise.then(()=> {
-          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch })
-          expect(afterSuccess2).to.have.been.calledWith({ getState, dispatch })
+          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response1) })
+          expect(afterSuccess2).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response2) })
           done()
         })
       })
@@ -279,7 +279,7 @@ describe('Middleware::Api', ()=> {
             type: successType1,
             response: camelizeKeys(response1)
           })
-          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch })
+          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response1) })
           done()
         })
       })
