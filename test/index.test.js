@@ -5,7 +5,7 @@ import chai, { expect } from 'chai'
 import superagent from 'superagent'
 import { camelizeKeys } from 'humps'
 
-import createApiMiddleware, { CALL_API, CHAIN_API } from 'index'
+import createApiMiddleware, { CALL_API, CHAIN_API, MAX_REPLAY_TIMES } from 'index'
 
 chai.use(sinonChai)
 
@@ -349,6 +349,32 @@ describe('Middleware::Api', ()=> {
               .then(()=> {
                 expect(superagent.get).to.have.been
                   .calledWith(`${BASE_URL}${path2}`).twice
+                done()
+              })
+          })
+          it('replay no more than `maxReplayTimes`', (done) => {
+            let replayTimes = 0
+            let maxReplayTimes = 6
+            let dispatchedAction
+            dispatch = function(a) {
+              dispatchedAction = a
+            }
+            apiMiddleware = createApiMiddleware({
+              baseUrl: BASE_URL,
+              maxReplayTimes,
+              errorInterceptor: ({ proceedError, replay, _getState })=> {
+                replayTimes ++
+                replay()
+              }
+            })
+            apiMiddleware({ dispatch, getState })(next)(action)
+              .then(()=> {
+                expect(superagent.get.callCount).to.equal(replayTimes + 1)
+                expect(dispatchedAction.type).to.equal(errorType2)
+                expect(dispatchedAction.error).to.be.an.instanceOf(Error)
+                expect(dispatchedAction.error.message).to.equal(
+                  `reached MAX_REPLAY_TIMES = ${maxReplayTimes}`
+                )
                 done()
               })
           })
