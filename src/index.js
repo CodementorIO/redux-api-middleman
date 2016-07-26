@@ -122,7 +122,7 @@ function createRequestPromise ({
             } else {
               let resBody = params.camelizeResponse ? camelizeKeys(res.body) : res.body
               dispatchSuccessType(resBody)
-              processAfterSuccess({ resBody })
+              processAfterSuccess(resBody)
               resolve(resBody)
             }
           })
@@ -154,9 +154,9 @@ function createRequestPromise ({
           response: resBody
         }))
       }
-      function processAfterSuccess ({ resBody }) {
+      function processAfterSuccess (response) {
         if (_.isFunction(params.afterSuccess)) {
-          params.afterSuccess({ getState, dispatch, response: resBody })
+          params.afterSuccess({ getState, dispatch, response })
         }
       }
       function getExtendedParams () {
