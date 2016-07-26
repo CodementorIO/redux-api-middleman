@@ -16,7 +16,7 @@ let noopDefaultParams = ()=> {
   return {}
 }
 
-export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaultParams = noopDefaultParams }) => {
+export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaultParams = noopDefaultParams, maxReplayTimes = MAX_REPLAY_TIMES }) => {
 
   let extractParams = paramsExtractor({ baseUrl })
 
@@ -32,7 +32,6 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaul
       return next(action)
     }
 
-
     return new Promise((resolve, reject)=> {
       let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
         return createRequestPromise({
@@ -41,7 +40,8 @@ export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaul
           getState,
           dispatch,
           errorInterceptor,
-          extractParams
+          extractParams,
+          maxReplayTimes
         })
       })
 
@@ -73,7 +73,8 @@ function createRequestPromise ({
   getState,
   dispatch,
   errorInterceptor,
-  extractParams
+  extractParams,
+  maxReplayTimes
 }) {
   return (prevBody)=> {
 
@@ -104,9 +105,9 @@ function createRequestPromise ({
             }
             if (err) {
 
-              if (replayTimes === MAX_REPLAY_TIMES) {
+              if (replayTimes === maxReplayTimes) {
                 handleError(
-                  new Error(`reached MAX_REPLAY_TIMES = ${MAX_REPLAY_TIMES}`)
+                  new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
                 )
               } else {
                 replayTimes += 1

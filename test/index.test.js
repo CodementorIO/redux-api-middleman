@@ -352,29 +352,28 @@ describe('Middleware::Api', ()=> {
                 done()
               })
           })
-          it(`replay no more than MAX_REPLAY_TIMES: ${MAX_REPLAY_TIMES}`, (done) => {
+          it('replay no more than `maxReplayTimes`', (done) => {
             let replayTimes = 0
+            let maxReplayTimes = 6
             let dispatchedAction
             dispatch = function(a) {
               dispatchedAction = a
             }
             apiMiddleware = createApiMiddleware({
               baseUrl: BASE_URL,
+              maxReplayTimes,
               errorInterceptor: ({ proceedError, replay, _getState })=> {
-                if (replayTimes === MAX_REPLAY_TIMES) {
-                  proceedError()
-                } else {
-                  replayTimes ++
-                  replay()
-                }
+                replayTimes ++
+                replay()
               }
             })
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
+                expect(superagent.get.callCount).to.equal(replayTimes + 1)
                 expect(dispatchedAction.type).to.equal(errorType2)
                 expect(dispatchedAction.error).to.be.an.instanceOf(Error)
                 expect(dispatchedAction.error.message).to.equal(
-                  `reached MAX_REPLAY_TIMES = ${MAX_REPLAY_TIMES}`
+                  `reached MAX_REPLAY_TIMES = ${maxReplayTimes}`
                 )
                 done()
               })
