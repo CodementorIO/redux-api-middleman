@@ -1,7 +1,7 @@
 import superAgent from 'superagent'
 import Promise from 'bluebird'
 import _ from 'lodash'
-import { camelizeKeys } from 'humps'
+import { camelizeKeys, decamelizeKeys } from 'humps'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
@@ -93,12 +93,18 @@ function createRequestPromise ({
           request = request.withCredentials()
         }
 
+        let queryObject = Object.assign({}, defaultParams.query, params.query)
+        let sendObject = Object.assign({}, defaultParams.body, params.body)
+
+        if(params.decamelizeRequest) {
+          queryObject = decamelizeKeys(queryObject)
+          sendObject = decamelizeKeys(sendObject)
+        }
+
         request
           .set(defaultParams.headers)
-          .query(defaultParams.query)
-          .query(params.query)
-          .send(defaultParams.body)
-          .send(params.body)
+          .query(queryObject)
+          .send(sendObject)
           .end((err, res)=> {
             function proceedError () {
               handleError(err)
@@ -179,6 +185,7 @@ function paramsExtractor ({ baseUrl }) {
       body,
       url,
       camelizeResponse = true,
+      decamelizeRequest = true,
       successType,
       sendingType,
       errorType,
@@ -198,6 +205,7 @@ function paramsExtractor ({ baseUrl }) {
       errorType,
       afterSuccess,
       camelizeResponse,
+      decamelizeRequest,
       afterError
     }
 
