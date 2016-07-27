@@ -3,9 +3,9 @@ import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import chai, { expect } from 'chai'
 import superagent from 'superagent'
-import { camelizeKeys } from 'humps'
+import { camelizeKeys, decamelizeKeys } from 'humps'
 
-import createApiMiddleware, { CALL_API, CHAIN_API, MAX_REPLAY_TIMES } from 'index'
+import createApiMiddleware, { CALL_API, CHAIN_API } from 'index'
 
 chai.use(sinonChai)
 
@@ -51,7 +51,7 @@ describe('Middleware::Api', ()=> {
               [CALL_API]: {
                 method: 'post',
                 body: { bodyKey: 'body-val' },
-                query: { queryKey: 'query-val' },
+                query: decamelizeKeys({ queryKey: 'query-val' }),
                 path: path1,
                 afterSuccess: afterSuccess1,
                 successType: successType1,
@@ -79,7 +79,7 @@ describe('Middleware::Api', ()=> {
 
     function nockRequest1 () {
       return nock(BASE_URL).post(path1)
-                           .query({ queryKey: 'query-val' })
+                           .query(decamelizeKeys({ queryKey: 'query-val' }))
                            .reply(200, response1)
     }
     function nockRequest2 (status = 200) {
@@ -157,6 +157,42 @@ describe('Middleware::Api', ()=> {
       })
     })
 
+    describe('when `decamelizeRequest` is false', ()=> {
+      let path = '/the-path'
+      let nockScope
+
+      beforeEach(()=> {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  path: `${path}`,
+                  method: 'post',
+                  body: { camelCase: 'OYOYO' },
+                  decamelizeRequest: false,
+                  successType: successType1
+                }
+              }
+            }]
+        }
+        nockScope = nock(BASE_URL).post(path, { camelCase: 'OYOYO' }).reply(200, response1)
+      })
+      it('should pass', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          expect(dispatch).to.have.been
+            .calledWith({
+              type: successType1,
+              response: camelizeKeys(response1)
+            })
+          nockScope.done()
+          done()
+        })
+      })
+    })
+
     describe('when generateDefaultParams is provided', ()=> {
       let path = '/the-path'
       let nockScope
@@ -188,13 +224,13 @@ describe('Middleware::Api', ()=> {
         }
 
         nockScope = nock(BASE_URL)
-          .post(path, {
+          .post(path, decamelizeKeys({
             additionalBodyKey: 'additionalBodyVal',
             bodyKey: 'bodyVal'
-          })
-          .query({
+          }))
+          .query(decamelizeKeys({
             additionalKey: 'additionalVal'
-          })
+          }))
           .reply(200, response1)
       })
       it('merge generateDefaultParams into request', (done)=> {
