@@ -79,9 +79,84 @@ when success, it would dispatch an action:
 }
 ```
 
+# Features:
+
+- Async to Sync: Abstract the async nature of sending API to make it easier to implement/test
+- Universal Rendering Friendly
+- Support chaining(successive) API calls
+- Side Effect Friendly
+- Replay request optionally when failed
+- Tweek request/response format when needed
+
 # API Documentation:
 
 ## Creation:
+
+A middleware can be created like this:
+
+```javascript
+import apiMiddleware from 'redux-api-middleman'
+
+apiMiddleware({
+  baseUrl: 'https://api.myapp.com',
+  errorInterceptor: ({ err, proceedError, replay, getState })=> {
+    // handle replay here
+  },
+  generateDefaultParams: ({ getState })=> {
+    return {
+      headers: { 'X-Requested-From': 'my-killer-app' },
+
+    }
+  },
+  maxReplayTimes: 5
+})
+```
+
+### Options:
+
+Required ones:
+
+- `baseUrl`: The base url of api calls
+
+Optional ones:
+
+- `errorInterceptor`:
+
+When provided, this function would be invoked whenever an API call fails.
+The function signature looks like this:
+
+```javascript
+({ err, proceedError, replay, getState })=> {
+
+}
+```
+
+Where:
+
+`err` is the error object returned by [`superagent`](https://visionmedia.github.io/superagent/),
+`replay()` can be used to replay the request with the same method/parameters,
+`proceedError()` can be used to proceed error to reducers
+
+For example, to refresh access token when server responds 401:
+
+```javascript
+({ err, proceedError, replay, getState })=> {
+  if(err.status === 401) {
+    refreshAccessToken()
+      .then(()=> { replay() })
+  } else {
+    proceedError()
+  }
+}
+```
+
+The code above would do the token refreshing whenever err is 401,
+and proceed the original error otherwise.
+
+
 ## Usage In Action Creators:
-## Usave In Reducers:
+## Usage In Reducers:
 TODO
+
+# LICENCE:
+MIT

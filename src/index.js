@@ -16,7 +16,12 @@ let noopDefaultParams = ()=> {
   return {}
 }
 
-export default ({ errorInterceptor = defaultInterceptor, baseUrl, generateDefaultParams = noopDefaultParams, maxReplayTimes = MAX_REPLAY_TIMES }) => {
+export default ({
+  errorInterceptor = defaultInterceptor,
+  baseUrl,
+  generateDefaultParams = noopDefaultParams,
+  maxReplayTimes = MAX_REPLAY_TIMES
+}) => {
 
   let extractParams = paramsExtractor({ baseUrl })
 
