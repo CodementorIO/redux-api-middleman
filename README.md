@@ -148,6 +148,20 @@ For example, to refresh access token when server responds 401:
 The code above would do the token refreshing whenever err is 401,
 and proceed the original error otherwise.
 
+#### `generateDefaultParams`(optional):
+
+A function which takes `({ getState })` and returns an object like this:
+
+```javascript
+{
+  headers: { 'x-header-key': 'header-val' },
+  query: { queryKey: 'query-val' },
+  body: { bodyKey: 'body-val' }
+}
+```
+
+On each request, the object returned by this function would be merged into the request's `header`, `query`, and `body`, respectively.
+
 ----
 
 ## Usage In Action Creators:
