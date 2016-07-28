@@ -1,10 +1,9 @@
-# Redux API Middleman
-
 [![Build Status](https://travis-ci.org/CodementorIO/redux-api-middleman.svg?branch=master)](https://travis-ci.org/CodementorIO/redux-api-middleman)
 [![npm version](https://badge.fury.io/js/redux-api-middleman.svg)](https://badge.fury.io/js/redux-api-middleman)
 
-A Redux middleware extracting the asynchronous behavior of sending API requests.
+# Redux API Middleman
 
+A Redux middleware extracting the asynchronous behavior of sending API requests.
 
 # Usage:
 
@@ -114,13 +113,9 @@ apiMiddleware({
 
 ### Options:
 
-Required ones:
+#### `baseUrl`: The base url of api calls(required)
 
-- `baseUrl`: The base url of api calls
-
-Optional ones:
-
-- `errorInterceptor`:
+#### `errorInterceptor`(optional):
 
 When provided, this function would be invoked whenever an API call fails.
 The function signature looks like this:
@@ -153,10 +148,181 @@ For example, to refresh access token when server responds 401:
 The code above would do the token refreshing whenever err is 401,
 and proceed the original error otherwise.
 
+----
 
 ## Usage In Action Creators:
+
+In Action Creators, we can use the following code to send a single request:
+
+```javascript
+import { CALL_API } from 'redux-api-middleman'
+
+export const ON_REQUEST_SUCCESS = Symbol('ON_REQUEST_SUCCESS')
+export const ON_REQUEST_FAILED = Symbol('ON_REQUEST_FAILED')
+export const ON_SENDING_REQUEST = Symbol('ON_SENDING_REQUEST')
+
+export function getInfo({ username }) {
+  return {
+    extraKey: 'extra-val',
+
+    [CALL_API]: {
+      method: 'get',
+      path: `/users/${username}/info`,
+      successType: ON_REQUEST_SUCCESS,
+      errorType: ON_REQUEST_FAILED,
+      sendingType: ON_REQUEST_FAILED,
+      afterSuccess: ({ getState, dispatch, response }) => {
+        //...
+      },
+      afterError: ({ getState })=> {
+        //...
+      }
+    }
+  }
+}
+```
+
+In short, just return an action object with `CALL_API`.
+
+### Options:
+
+### method(required):
+Http verb to use, can be `get`, `post`, `put` or `del`
+
+### path(optional):
+Request path to be concated with `baseUrl`
+
+### url:
+Full url of request, will take precedence over `path`
+
+### sendingType(optional):
+Action type to be dispatched immediately after sending the request
+
+### successType(required):
+Action type to be dispatched after the API call success
+
+### errorType(optional):
+Action type to be dispatched  after the API call fails
+
+### afterSuccess(optional):
+A callback function to be invoked after dispatching the action with type `successType`.
+`({ getState, dispatch, response })` would be passed into this callback function.
+This is a good place to handle request-related side effects such as route pushing.
+
+### afterError(optional):
+A callback function to be invoked after dispatching the action with type `errorType`.
+`({ getState })` would be passed into this callback function.
+
+
+## Sending Chaining Requests:
+
+To send chaining requests, just return an action with `CHAIN_API`-keyed object like this:
+
+```javascript
+import { CALL_API, CHAIN_API } from 'redux-api-middleman'
+
+export const ON_REQUEST_SUCCESS1 = Symbol('ON_REQUEST_SUCCESS1')
+export const ON_REQUEST_SUCCESS2 = Symbol('ON_REQUEST_SUCCESS2')
+
+export function getInfo({ username }) {
+  return {
+    [CHAIN_API]: [
+      ()=> {
+        return {
+          extraKey: 'extra-val',
+          [CALL_API]: {
+            method: 'get',
+            path: `/users/${username}/info`,
+            successType: ON_REQUEST_SUCCESS1
+          }
+        }
+      },
+      (responseOfFirstReq)=> {
+        return {
+          [CALL_API]: {
+            method: 'get',
+            path: `/blogs/${responseOfFirstReq.blogId}`,
+            successType: ON_REQUEST_SUCCESS2
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+In the code above, we send an API to `/users/${username}/info` to fetch user info containing a key `blogId`.
+After the first request is finished, we then send the second request with the `blogId` returned by server.
+
+---
+
 ## Usage In Reducers:
-TODO
+
+During the life cycle of an API call, several types of actions would be dispatched:
+
+### `sendingType` action:
+
+After the request has been sent, an action of type `sendingType` would be dispatched immediately.
+The action would contain the key-val pairs other than `CALL_API` in the action object.
+
+For example, if our action object looks like this:
+
+```javascript
+{
+  extraKey1: 'extra-val-1',
+  extraKey2: 'extra-val-2',
+  [CALL_API]: {
+    ...
+  }
+}
+```
+
+then the `sendingType` action would be:
+
+```javascript
+{
+  type: sendingType,
+  extraKey1: 'extra-val-1',
+  extraKey2: 'extra-val-2'
+}
+```
+
+### `successType` action:
+
+After the server responds successfully, an action of type `successType` would be dispatched.
+The action would contain:
+
+- the key-val pairs other than `CALL_API` in the action object
+- an extra `response` key, with its value be the server response
+
+For example, if the server responds with a body like this:
+
+```javascript
+{
+  responseKey: 'response-val'
+}
+```
+
+then the `successType` action would be:
+
+```javascript
+{
+  type: successType,
+  extraKey1: 'extra-val-1',
+  extraKey2: 'extra-val-2',
+  response: {
+    responseKey: 'response-val'
+  }
+}
+```
+
+### `errorType` action:
+
+After the server responds fails, an action of type `errorType` would be dispatched.
+The action would contain:
+
+- the key-val pairs other than `CALL_API` in the action object
+- an extra `error` key, with its value be the error object returned by [`superagent`](https://visionmedia.github.io/superagent/)
 
 # LICENCE:
 MIT
