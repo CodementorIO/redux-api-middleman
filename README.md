@@ -31,9 +31,9 @@ const store = applyMiddleware(
 
 import { CALL_API } from 'redux-api-middleman'
 
-export const GETTING_MY_INFO = Symbol('GETTING_MY_INFO')
-export const GET_MY_INFO_SUCCESS = Symbol('GET_MY_INFO_SUCCESS')
-export const GET_MY_INFO_FAILED = Symbol('GET_MY_INFO_FAILED')
+export const GETTING_MY_INFO = 'GETTING_MY_INFO'
+export const GET_MY_INFO_SUCCESS = 'GET_MY_INFO_SUCCESS'
+export const GET_MY_INFO_FAILED = 'GET_MY_INFO_FAILED'
 
 export function getMyInfo() {
   return {
@@ -171,9 +171,9 @@ In Action Creators, we can use the following code to send a single request:
 ```javascript
 import { CALL_API } from 'redux-api-middleman'
 
-export const ON_REQUEST_SUCCESS = Symbol('ON_REQUEST_SUCCESS')
-export const ON_REQUEST_FAILED = Symbol('ON_REQUEST_FAILED')
-export const ON_SENDING_REQUEST = Symbol('ON_SENDING_REQUEST')
+export const ON_REQUEST_SUCCESS = 'ON_REQUEST_SUCCESS'
+export const ON_REQUEST_FAILED = 'ON_REQUEST_FAILED'
+export const ON_SENDING_REQUEST = 'ON_SENDING_REQUEST'
 
 export function getInfo({ username }) {
   return {
@@ -235,8 +235,8 @@ To send chaining requests, just return an action with `CHAIN_API`-keyed object l
 ```javascript
 import { CALL_API, CHAIN_API } from 'redux-api-middleman'
 
-export const ON_REQUEST_SUCCESS1 = Symbol('ON_REQUEST_SUCCESS1')
-export const ON_REQUEST_SUCCESS2 = Symbol('ON_REQUEST_SUCCESS2')
+export const ON_REQUEST_SUCCESS1 = 'ON_REQUEST_SUCCESS1'
+export const ON_REQUEST_SUCCESS2 = 'ON_REQUEST_SUCCESS2'
 
 export function getInfo({ username }) {
   return {
