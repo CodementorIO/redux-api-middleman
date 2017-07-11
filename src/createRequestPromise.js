@@ -13,14 +13,8 @@ function actionWith (action, toMerge) {
   return _.merge(ac, toMerge)
 }
 
-function createActionPromise ({ actionPayload, dispatch }) {
-  return new Promise((resolve)=> {
-    dispatch(Object.assign({}, actionPayload))
-    resolve()
-  })
-}
-
 export default function ({
+  timeout,
   generateDefaultParams,
   createCallApiAction,
   getState,
@@ -32,14 +26,6 @@ export default function ({
   return (prevBody)=> {
 
     let apiAction = createCallApiAction(prevBody)
-
-    if(!apiAction[CALL_API]) {
-      return createActionPromise({
-        actionPayload: apiAction,
-        dispatch
-      })
-    }
-
     let params = extractParams(apiAction[CALL_API])
     let replayTimes = 0
 
@@ -64,6 +50,7 @@ export default function ({
 
         request
           .set(defaultParams.headers)
+          .timeout(timeout)
           .query(queryObject)
           .send(sendObject)
           .end((err, res)=> {

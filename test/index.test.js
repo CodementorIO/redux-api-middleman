@@ -294,6 +294,48 @@ describe('Middleware::Api', ()=> {
       })
     })
 
+    describe('when one of the apis timeout', ()=> {
+      let timeout = 50
+      let host = 'http://another-host.com'
+      let path = '/the-path'
+      let timeoutErrorType = 'TIMEOUT_ERROR'
+      let nockScope
+      let apiMiddleware, dispatchedAction
+
+      beforeEach(()=> {
+        dispatch = function(a) {
+          dispatchedAction = a
+        }
+        apiMiddleware = createApiMiddleware({
+          baseUrl: BASE_URL,
+          timeout,
+        })
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  url: `${host}${path}`,
+                  method: 'get',
+                  errorType: timeoutErrorType
+                }
+              }
+            }]
+        }
+        nockScope = nock(host).get(path).delay(timeout+1).reply(200)
+      })
+
+      it('dispatch error when timeout', (done) => {
+        apiMiddleware({ dispatch, getState })(next)(action)
+          .then(()=> {
+            expect(dispatchedAction.type).to.equal(timeoutErrorType)
+            nockScope.done()
+            done()
+          })
+      })
+    })
+
     describe('when one of the apis failed', ()=> {
       beforeEach(()=> {
         nockScope1 = nockRequest1()
@@ -418,44 +460,6 @@ describe('Middleware::Api', ()=> {
       })
     })
 
-    describe.only('when chaining with normal action object', ()=> {
-      let path = '/the-path'
-      let response1 = 'response message'
-
-      beforeEach(()=> {
-        nock.cleanAll()
-        action = {
-          [CHAIN_API]: [
-            ()=> {
-              return {
-                [CALL_API]: {
-                  path,
-                  method: 'get',
-                  successType: successType1
-                }
-              }
-            },
-            (_res) => {
-              return {
-                type: 'NORMAL_ACTION_PAYLOAD',
-                name: _res
-              }
-            }
-          ]
-        }
-        nock(BASE_URL).get(path).reply(200, response1)
-      })
-      it('still able to work', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been.calledWith({
-            type: 'NORMAL_ACTION_PAYLOAD',
-            name: response1
-          })
-          done()
-        })
-      })
-    })
   })
 
   describe('when action is without CALL_API and CHAIN_API', ()=> {

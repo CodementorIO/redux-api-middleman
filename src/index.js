@@ -4,7 +4,8 @@ import createRequestPromise from './createRequestPromise'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
-export const MAX_REPLAY_TIMES = 2
+export const DEFAULT_MAX_REPLAY_TIMES = 2
+export const DEFAULT_TIMEOUT = 20000 //ms
 
 _.noConflict()
 
@@ -17,9 +18,10 @@ let noopDefaultParams = ()=> {
 
 export default ({
   baseUrl,
+  timeout = DEFAULT_TIMEOUT,
   errorInterceptor = defaultInterceptor,
   generateDefaultParams = noopDefaultParams,
-  maxReplayTimes = MAX_REPLAY_TIMES
+  maxReplayTimes = DEFAULT_MAX_REPLAY_TIMES
 }) => {
 
   let extractParams = paramsExtractor({ baseUrl })
@@ -42,6 +44,7 @@ export default ({
 
       let promiseCreators = action[CHAIN_API].map((createCallApiAction)=> {
         return createRequestPromise({
+          timeout,
           generateDefaultParams,
           createCallApiAction,
           getState,
