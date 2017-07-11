@@ -497,4 +497,5 @@ describe('Middleware::Api', ()=> {
       expect(dispatchedAction[CHAIN_API][0]()).to.equal(action)
     })
   })
+
 })

@@ -64,8 +64,8 @@ export default ({
       overall.finally(()=> {
         resolve()
       })
-      .catch(()=> {
-        reject()
+      .catch((e)=> {
+        reject(e)
       })
     })
   }
