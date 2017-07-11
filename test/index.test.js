@@ -416,7 +416,45 @@ describe('Middleware::Api', ()=> {
           })
         })
       })
+    })
 
+    describe.only('when chaining with normal action object', ()=> {
+      let path = '/the-path'
+      let response1 = 'response message'
+
+      beforeEach(()=> {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  path,
+                  method: 'get',
+                  successType: successType1
+                }
+              }
+            },
+            (_res) => {
+              return {
+                type: 'NORMAL_ACTION_PAYLOAD',
+                name: _res
+              }
+            }
+          ]
+        }
+        nock(BASE_URL).get(path).reply(200, response1)
+      })
+      it('still able to work', (done)=> {
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          expect(dispatch).to.have.been.calledWith({
+            type: 'NORMAL_ACTION_PAYLOAD',
+            name: response1
+          })
+          done()
+        })
+      })
     })
   })
 
