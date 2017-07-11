@@ -294,6 +294,48 @@ describe('Middleware::Api', ()=> {
       })
     })
 
+    describe('when one of the apis timeout', ()=> {
+      let timeout = 50
+      let host = 'http://another-host.com'
+      let path = '/the-path'
+      let timeoutErrorType = 'TIMEOUT_ERROR'
+      let nockScope
+      let apiMiddleware, dispatchedAction
+
+      beforeEach(()=> {
+        dispatch = function(a) {
+          dispatchedAction = a
+        }
+        apiMiddleware = createApiMiddleware({
+          baseUrl: BASE_URL,
+          timeout,
+        })
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  url: `${host}${path}`,
+                  method: 'get',
+                  errorType: timeoutErrorType
+                }
+              }
+            }]
+        }
+        nockScope = nock(host).get(path).delay(timeout+1).reply(200)
+      })
+
+      it('dispatch error when timeout', (done) => {
+        apiMiddleware({ dispatch, getState })(next)(action)
+          .then(()=> {
+            expect(dispatchedAction.type).to.equal(timeoutErrorType)
+            nockScope.done()
+            done()
+          })
+      })
+    })
+
     describe('when one of the apis failed', ()=> {
       beforeEach(()=> {
         nockScope1 = nockRequest1()
@@ -416,8 +458,8 @@ describe('Middleware::Api', ()=> {
           })
         })
       })
-
     })
+
   })
 
   describe('when action is without CALL_API and CHAIN_API', ()=> {
