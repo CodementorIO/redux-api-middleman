@@ -1,16 +1,20 @@
 
 import Promise from 'bluebird'
-import _ from 'lodash'
+
+import _merge from 'lodash/merge'
+import _cloneDeep from 'lodash/cloneDeep'
+import _isFunction from 'lodash/isFunction'
+
 import superAgent from 'superagent'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 import { CALL_API } from './'
 
 function actionWith (action, toMerge) {
-  let ac = _.cloneDeep(action)
+  let ac = _cloneDeep(action)
   if (ac[CALL_API]) {
     delete ac[CALL_API]
   }
-  return _.merge(ac, toMerge)
+  return _merge(ac, toMerge)
 }
 
 export default function ({
@@ -36,7 +40,7 @@ export default function ({
         }
         let defaultParams = getExtendedParams()
         let request = superAgent[params.method](params.url)
-        if (_.isFunction(request.withCredentials)) {
+        if (_isFunction(request.withCredentials)) {
           request = request.withCredentials()
         }
 
@@ -98,7 +102,7 @@ export default function ({
         }
       }
       function processAfterError () {
-        if (_.isFunction(params.afterError)) {
+        if (_isFunction(params.afterError)) {
           params.afterError({ getState })
         }
       }
@@ -109,7 +113,7 @@ export default function ({
         }))
       }
       function processAfterSuccess (response) {
-        if (_.isFunction(params.afterSuccess)) {
+        if (_isFunction(params.afterSuccess)) {
           params.afterSuccess({ getState, dispatch, response })
         }
       }

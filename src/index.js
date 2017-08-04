@@ -1,5 +1,4 @@
 import Promise from 'bluebird'
-import _ from 'lodash'
 import createRequestPromise from './createRequestPromise'
 
 export const CALL_API = Symbol('CALL_API')
@@ -7,7 +6,6 @@ export const CHAIN_API = Symbol('CHAIN_API')
 export const DEFAULT_MAX_REPLAY_TIMES = 2
 export const DEFAULT_TIMEOUT = 20000 //ms
 
-_.noConflict()
 
 let defaultInterceptor = function({ proceedError, err, replay, getState }) {
   proceedError()
