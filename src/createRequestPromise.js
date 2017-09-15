@@ -46,6 +46,7 @@ export default function ({
 
         let queryObject = Object.assign({}, defaultParams.query, params.query)
         let sendObject = Object.assign({}, defaultParams.body, params.body)
+        let headersObject = Object.assign({}, defaultParams.headers, params.headers)
 
         if(params.decamelizeRequest) {
           queryObject = decamelizeKeys(queryObject)
@@ -53,7 +54,7 @@ export default function ({
         }
 
         request
-          .set(defaultParams.headers)
+          .set(headersObject)
           .timeout(timeout)
           .query(queryObject)
           .send(sendObject)
