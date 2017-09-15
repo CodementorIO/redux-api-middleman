@@ -202,7 +202,8 @@ describe('Middleware::Api', ()=> {
         generateDefaultParams = sinon.stub()
         generateDefaultParams.returns({
           body: { additionalBodyKey: 'additionalBodyVal' },
-          query: { additionalKey: 'additionalVal' }
+          query: { additionalKey: 'additionalVal' },
+          headers: { additionalHeadersKey: 'additionalHeadersVal' }
         })
         apiMiddleware = createApiMiddleware({ baseUrl: BASE_URL, generateDefaultParams })
       })
@@ -217,6 +218,7 @@ describe('Middleware::Api', ()=> {
                   path: `${path}`,
                   method: 'post',
                   body: { bodyKey: 'bodyVal' },
+                  headers: { headersKey: 'headersVal' },
                   successType: successType1
                 }
               }
@@ -224,6 +226,8 @@ describe('Middleware::Api', ()=> {
         }
 
         nockScope = nock(BASE_URL)
+          .matchHeader('additionalHeadersKey', 'additionalHeadersVal')
+          .matchHeader('headersKey', 'headersVal' )
           .post(path, decamelizeKeys({
             additionalBodyKey: 'additionalBodyVal',
             bodyKey: 'bodyVal'
