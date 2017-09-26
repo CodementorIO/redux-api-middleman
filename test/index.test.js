@@ -430,7 +430,8 @@ describe('Middleware::Api', ()=> {
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
                 expect(superagent.get).to.have.been
-                  .calledWith(`${BASE_URL}${path2}`).twice
+                  .calledWith(`${BASE_URL}${path2}`)
+                expect(superagent.get.callCount).to.equal(2)
                 done()
               })
           })
