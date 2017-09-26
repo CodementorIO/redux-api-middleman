@@ -34,10 +34,13 @@ export default function ({
     let replayTimes = 0
 
     return new Promise((resolve, reject)=> {
-      function sendRequest () {
+
+      function sendRequest (interceptorParams = {}) {
+
         if (params.sendingType) {
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
+
         let defaultParams = getExtendedParams()
         let request = superAgent[params.method](params.url)
         if (_isFunction(request.withCredentials)) {
@@ -46,7 +49,11 @@ export default function ({
 
         let queryObject = Object.assign({}, defaultParams.query, params.query)
         let sendObject = Object.assign({}, defaultParams.body, params.body)
-        let headersObject = Object.assign({}, defaultParams.headers, params.headers)
+        let headersObject = Object.assign({},
+          defaultParams.headers,
+          params.headers,
+          interceptorParams.headers
+        )
 
         if(params.decamelizeRequest) {
           queryObject = decamelizeKeys(queryObject)
