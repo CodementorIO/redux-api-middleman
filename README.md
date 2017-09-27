@@ -137,8 +137,13 @@ For example, to refresh access token when server responds 401:
 ```javascript
 ({ err, proceedError, replay, getState })=> {
   if(err.status === 401) {
-    refreshAccessToken()
-      .then(()=> { replay() })
+    refreshAccessToken().then((res)=> {
+       // here you can pass additional headers if you want
+       let headers = {
+         'x-access-token': res.token,
+       }
+       replay({ headers })
+     })
   } else {
     proceedError()
   }
