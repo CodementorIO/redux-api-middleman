@@ -2,7 +2,6 @@ import nock from 'nock'
 import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import chai, { expect } from 'chai'
-import superagent from 'superagent'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
 import createApiMiddleware, { CALL_API, CHAIN_API } from 'index'
@@ -410,9 +409,6 @@ describe('Middleware::Api', ()=> {
         })
 
         describe('replay', ()=> {
-          beforeEach(()=> sinon.spy(superagent, 'get'))
-          afterEach(()=> superagent.get.restore())
-
           it('resend the request', (done)=> {
             let errTime = 0
             apiMiddleware = createApiMiddleware({
@@ -429,9 +425,7 @@ describe('Middleware::Api', ()=> {
 
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
-                expect(superagent.get).to.have.been
-                  .calledWith(`${BASE_URL}${path2}`)
-                expect(superagent.get.callCount).to.equal(2)
+                expect(errTime).to.equal(1)
                 done()
               })
           })
@@ -452,7 +446,7 @@ describe('Middleware::Api', ()=> {
             })
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
-                expect(superagent.get.callCount).to.equal(replayTimes + 1)
+                expect(replayTimes).to.equal(6)
                 expect(dispatchedAction.type).to.equal(errorType2)
                 expect(dispatchedAction.error).to.be.an.instanceOf(Error)
                 expect(dispatchedAction.error.message).to.equal(
