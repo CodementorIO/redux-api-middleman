@@ -4,7 +4,7 @@ import sinonChai from 'sinon-chai'
 import chai, { expect } from 'chai'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
-import createApiMiddleware, { CALL_API, CHAIN_API } from 'index'
+import createApiMiddleware, { CALL_API, CHAIN_API } from '../src/index'
 
 chai.use(sinonChai)
 
@@ -379,7 +379,7 @@ describe('Middleware::Api', ()=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
         promise.then(()=> {
           expect(dispatchedAction.type).to.equal(errorType2)
-          expect(dispatchedAction.error).to.be.an.instanceOf(Error)
+          expect(dispatchedAction.error.status).to.equal(400)
           done()
         })
       })
@@ -403,13 +403,19 @@ describe('Middleware::Api', ()=> {
             .then(()=> {
               expect(spy).to.have.been.called
               expect(dispatchedAction.type).to.equal(errorType2)
-              expect(dispatchedAction.error).to.be.an.instanceOf(Error)
+              expect(dispatchedAction.error.status).to.equal(400)
               done()
             })
         })
 
         describe('replay', ()=> {
+          function repeat (times, fn) {
+            for (var i = 0; i < times; i += 1) {
+              fn()
+            }
+          }
           it('resend the request', (done)=> {
+            nockRequest2(400)
             let errTime = 0
             apiMiddleware = createApiMiddleware({
               baseUrl: BASE_URL,
@@ -428,11 +434,15 @@ describe('Middleware::Api', ()=> {
                 expect(errTime).to.equal(1)
                 done()
               })
+              .catch(()=> {
+                done.fail()
+              })
           })
           it('replay no more than `maxReplayTimes`', (done) => {
             let replayTimes = 0
             let maxReplayTimes = 6
             let dispatchedAction
+            repeat(6, ()=> nockRequest2(400))
             dispatch = function(a) {
               dispatchedAction = a
             }

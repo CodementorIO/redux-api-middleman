@@ -3,6 +3,9 @@
   "version": "1.4.0",
   "description": "A Redux middleware making sending request a breeze",
   "main": "lib/index.js",
+  "jest": {
+    "testEnvironment": "node"
+  },
   "scripts": {
     "test": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
     "test:ci": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js'",
@@ -31,6 +34,7 @@
     "axios": "^0.16.2",
     "bluebird": "^3.4.0",
     "humps": "^1.1.0",
+    "jest": "^21.2.1",
     "lodash": "^4.13.1"
   },
   "licence": "MIT"
