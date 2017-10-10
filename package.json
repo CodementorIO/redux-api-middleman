@@ -7,8 +7,8 @@
     "testEnvironment": "node"
   },
   "scripts": {
-    "test": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js' -w",
-    "test:ci": "NODE_PATH=src/ mocha --compilers js:babel-register --recursive 'test/**/*.test.js'",
+    "test": "jest",
+    "test:ci": "jest",
     "build": "babel src --out-dir lib",
     "clear": "rm -rf lib/*",
     "prepublish": "npm run test:ci && npm run clear && npm run build"
@@ -25,7 +25,6 @@
     "babel-preset-es2015": "^6.9.0",
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
-    "mocha": "^2.5.3",
     "nock": "^9.0.22",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
