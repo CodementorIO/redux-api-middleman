@@ -5,9 +5,10 @@ import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
 
-import superAgent from 'superagent'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 import { CALL_API } from './'
+
+import axios from 'axios'
 
 function actionWith (action, toMerge) {
   let ac = _cloneDeep(action)
@@ -42,10 +43,6 @@ export default function ({
         }
 
         let defaultParams = getExtendedParams()
-        let request = superAgent[params.method](params.url)
-        if (_isFunction(request.withCredentials)) {
-          request = request.withCredentials()
-        }
 
         let queryObject = Object.assign({}, defaultParams.query, params.query)
         let sendObject = Object.assign({}, defaultParams.body, params.body)
@@ -60,38 +57,40 @@ export default function ({
           sendObject = decamelizeKeys(sendObject)
         }
 
-        request
-          .set(headersObject)
-          .timeout(timeout)
-          .query(queryObject)
-          .send(sendObject)
-          .end((err, res)=> {
-            function proceedError () {
-              handleError(err)
-            }
-            if (err) {
+        axios({
+          headers: headersObject,
+          method: params.method,
+          url: params.url,
+          params: queryObject,
+          data: sendObject,
+          timeout
+        })
+        .then((res)=> {
+          let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
+          dispatchSuccessType(resBody)
+          processAfterSuccess(resBody)
+          resolve(resBody)
+        })
+        .catch((error)=> {
+          let err = error.response
+          function proceedError () {
+            handleError(err)
+          }
+          if (replayTimes === maxReplayTimes) {
+            handleError(
+              new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
+            )
+          } else {
+            replayTimes += 1
+            errorInterceptor({
+              proceedError,
+              err,
+              getState,
+              replay: sendRequest
+            })
+          }
+        })
 
-              if (replayTimes === maxReplayTimes) {
-                handleError(
-                  new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
-                )
-              } else {
-                replayTimes += 1
-                errorInterceptor({
-                  proceedError,
-                  err,
-                  getState,
-                  replay: sendRequest
-                })
-              }
-
-            } else {
-              let resBody = params.camelizeResponse ? camelizeKeys(res.body) : res.body
-              dispatchSuccessType(resBody)
-              processAfterSuccess(resBody)
-              resolve(resBody)
-            }
-          })
       }
       sendRequest()
 

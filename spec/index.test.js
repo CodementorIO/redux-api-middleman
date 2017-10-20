@@ -2,10 +2,9 @@ import nock from 'nock'
 import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import chai, { expect } from 'chai'
-import superagent from 'superagent'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
-import createApiMiddleware, { CALL_API, CHAIN_API } from 'index'
+import createApiMiddleware, { CALL_API, CHAIN_API } from '../src/index'
 
 chai.use(sinonChai)
 
@@ -380,7 +379,7 @@ describe('Middleware::Api', ()=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
         promise.then(()=> {
           expect(dispatchedAction.type).to.equal(errorType2)
-          expect(dispatchedAction.error).to.be.an.instanceOf(Error)
+          expect(dispatchedAction.error.status).to.equal(400)
           done()
         })
       })
@@ -404,16 +403,19 @@ describe('Middleware::Api', ()=> {
             .then(()=> {
               expect(spy).to.have.been.called
               expect(dispatchedAction.type).to.equal(errorType2)
-              expect(dispatchedAction.error).to.be.an.instanceOf(Error)
+              expect(dispatchedAction.error.status).to.equal(400)
               done()
             })
         })
 
         describe('replay', ()=> {
-          beforeEach(()=> sinon.spy(superagent, 'get'))
-          afterEach(()=> superagent.get.restore())
-
+          function repeat (times, fn) {
+            for (var i = 0; i < times; i += 1) {
+              fn()
+            }
+          }
           it('resend the request', (done)=> {
+            nockRequest2(400)
             let errTime = 0
             apiMiddleware = createApiMiddleware({
               baseUrl: BASE_URL,
@@ -429,16 +431,18 @@ describe('Middleware::Api', ()=> {
 
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
-                expect(superagent.get).to.have.been
-                  .calledWith(`${BASE_URL}${path2}`)
-                expect(superagent.get.callCount).to.equal(2)
+                expect(errTime).to.equal(1)
                 done()
+              })
+              .catch(()=> {
+                done.fail()
               })
           })
           it('replay no more than `maxReplayTimes`', (done) => {
             let replayTimes = 0
             let maxReplayTimes = 6
             let dispatchedAction
+            repeat(6, ()=> nockRequest2(400))
             dispatch = function(a) {
               dispatchedAction = a
             }
@@ -452,7 +456,7 @@ describe('Middleware::Api', ()=> {
             })
             apiMiddleware({ dispatch, getState })(next)(action)
               .then(()=> {
-                expect(superagent.get.callCount).to.equal(replayTimes + 1)
+                expect(replayTimes).to.equal(6)
                 expect(dispatchedAction.type).to.equal(errorType2)
                 expect(dispatchedAction.error).to.be.an.instanceOf(Error)
                 expect(dispatchedAction.error.message).to.equal(
