@@ -4,6 +4,7 @@ import Promise from 'bluebird'
 import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
+import omit from 'lodash/omit'
 
 import { camelizeKeys, decamelizeKeys } from 'humps'
 import { CALL_API } from './'
@@ -57,14 +58,16 @@ export default function ({
           sendObject = decamelizeKeys(sendObject)
         }
 
-        axios({
+        let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
+
+        axios(omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: Object.keys(sendObject).length > 0 ? sendObject : null,
+          data: sendObject,
           timeout
-        })
+        }, omitKeys))
         .then((res)=> {
           let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
           dispatchSuccessType(resBody)

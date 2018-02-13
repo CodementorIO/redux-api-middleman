@@ -90,6 +90,37 @@ describe('Middleware::Api', ()=> {
       nock.cleanAll()
     })
 
+    describe('when sending GET request', () => {
+      let host = 'http://get-request-host.com'
+      let path = '/the-path'
+      let nockScope
+      beforeEach(() => {
+        nock.cleanAll()
+        action = {
+          [CHAIN_API]: [
+            ()=> {
+              return {
+                [CALL_API]: {
+                  url: `${host}${path}`,
+                  method: 'get',
+                  successType: successType1
+                }
+              }
+            }]
+        }
+      })
+      it('does not send body', (done) => {
+        nockScope = nock(host).get(path, body => {
+          return !body
+        }).reply(200, response1)
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          nockScope.done()
+          done()
+        })
+      })
+    })
+
     describe('when `url` is given in CALL_API', ()=> {
       let host = 'http://another-host.com'
       let path = '/the-path'
