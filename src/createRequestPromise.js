@@ -62,7 +62,7 @@ export default function ({
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: sendObject,
+          data: Object.keys(sendObject).length > 0 ? sendObject : null,
           timeout
         })
         .then((res)=> {
