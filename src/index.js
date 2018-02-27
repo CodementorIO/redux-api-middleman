@@ -80,6 +80,7 @@ function paramsExtractor ({ baseUrl }) {
       url,
       camelizeResponse = true,
       decamelizeRequest = true,
+      withCredentials = true,
       successType,
       sendingType,
       errorType,
@@ -101,6 +102,7 @@ function paramsExtractor ({ baseUrl }) {
       afterSuccess,
       camelizeResponse,
       decamelizeRequest,
+      withCredentials,
       afterError
     }
 

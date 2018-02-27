@@ -66,6 +66,7 @@ export default function ({
           url: params.url,
           params: queryObject,
           data: sendObject,
+          withCredentials: params.withCredentials,
           timeout
         }, omitKeys))
         .then((res)=> {
