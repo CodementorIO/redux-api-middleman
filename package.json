@@ -11,6 +11,9 @@
     "test:ci": "jest",
     "build": "babel src --out-dir lib",
     "clear": "rm -rf lib/*",
+    "release:patch": "yarn run build && release patch",
+    "release:minor": "yarn run build && release minor",
+    "release:major": "yarn run build && release major",
     "prepublish": "yarn run test:ci && yarn run clear && yarn run build"
   },
   "author": {
@@ -26,6 +29,7 @@
     "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "nock": "^9.0.22",
+    "release": "^3.1.6",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
   },
