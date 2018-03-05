@@ -69,7 +69,7 @@ export default ({
   }
 }
 
-function paramsExtractor ({ baseUrl }) {
+export function paramsExtractor ({ baseUrl }) {
   return (callApi)=> {
     let {
       method,
