@@ -4,7 +4,11 @@ import sinonChai from 'sinon-chai'
 import chai, { expect } from 'chai'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
-import createApiMiddleware, { CALL_API, CHAIN_API } from '../src/index'
+import createApiMiddleware, {
+  CALL_API,
+  CHAIN_API,
+  paramsExtractor
+} from '../src'
 
 chai.use(sinonChai)
 
@@ -271,11 +275,10 @@ describe('Middleware::Api', ()=> {
         let promise = apiMiddleware({ dispatch, getState })(next)(action)
 
         promise.then(()=> {
-          expect(dispatch).to.have.been
-            .calledWith({
-              type: successType1,
-              response: camelizeKeys(response1)
-            })
+          expect(dispatch).to.have.been.calledWith({
+            type: successType1,
+            response: camelizeKeys(response1)
+          })
           nockScope.done()
           done()
         })
@@ -538,4 +541,22 @@ describe('Middleware::Api', ()=> {
     })
   })
 
+  describe('#paramsExtractor', () => {
+    let params
+    const baseUrl = 'http://base'
+    const callApi = {
+      path: '/path'
+    }
+    beforeEach(() => {
+      params = paramsExtractor({ baseUrl })(callApi)
+    })
+    it('sets `url` with prefix baseUrl', () => {
+      expect(params.url).to.equal(
+        `${baseUrl}${callApi.path}`
+      )
+    })
+    it('defaults to set withCredentials to ture', () => {
+      expect(params.withCredentials).to.equal(true)
+    })
+  })
 })
