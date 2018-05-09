@@ -19,10 +19,12 @@ function actionWith (action, toMerge) {
   return _merge(ac, toMerge)
 }
 
-function isUrlencodedeContentType (headersObject) {
+function isUrlencodedContentType (headersObject) {
   let contentTypeKey = Object.keys(headersObject).find(key => key.toLowerCase() === 'content-type')
-  let isUrlencodede = headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
-  return isUrlencodede
+  if (!contentTypeKey) {
+    return false
+  }
+  return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
 }
 
 export default function ({
@@ -66,14 +68,14 @@ export default function ({
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        let isUrlencodede = isUrlencodedeContentType(headersObject)
+        let isUrlencoded = isUrlencodedContentType(headersObject)
 
         let configs = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: isUrlencodede ? qs.stringify(sendObject) : sendObject,
+          data: isUrlencoded ? qs.stringify(sendObject) : sendObject,
           withCredentials: params.withCredentials,
           timeout
         }, omitKeys)
