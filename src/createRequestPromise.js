@@ -1,6 +1,6 @@
 
 import Promise from 'bluebird'
-
+import qs from 'qs'
 import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
@@ -17,6 +17,12 @@ function actionWith (action, toMerge) {
     delete ac[CALL_API]
   }
   return _merge(ac, toMerge)
+}
+
+function isUrlencodedeContentType (headersObject) {
+  let contentTypeKey = Object.keys(headersObject).find(key => key.toLowerCase() === 'content-type')
+  let isUrlencodede = headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
+  return isUrlencodede
 }
 
 export default function ({
@@ -60,15 +66,19 @@ export default function ({
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        axios(omit({
+        let isUrlencodede = isUrlencodedeContentType(headersObject)
+
+        let configs = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: sendObject,
+          data: isUrlencodede ? qs.stringify(sendObject) : sendObject,
           withCredentials: params.withCredentials,
           timeout
-        }, omitKeys))
+        }, omitKeys)
+
+        axios(configs)
         .then((res)=> {
           let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
           dispatchSuccessType(resBody)
