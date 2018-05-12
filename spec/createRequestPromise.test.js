@@ -97,8 +97,7 @@ describe('createRequestPromise', () => {
     expect(firstArgument).toHaveProperty('data')
   })
   it('should stringify body when `Content-Type = application/x-www-form-urlencoded`', () => {
-    const params = {
-      ...mockParams,
+    const params = Object.assign({}, mockParams, {
       method: 'post',
       body: {
         key: 'val'
@@ -106,7 +105,7 @@ describe('createRequestPromise', () => {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
-    }
+    })
     extractParams.mockReturnValueOnce(Object.assign({}, params))
     const promise = createRequestPromise({
       timeout,
@@ -125,14 +124,13 @@ describe('createRequestPromise', () => {
     const body = {
       key: 'val'
     }
-    const params = {
-      ...mockParams,
+    const params = Object.assign({}, mockParams, {
       method: 'post',
       body,
       headers: {
         'Content-Type': 'application/json'
       }
-    }
+    })
     extractParams.mockReturnValueOnce(Object.assign({}, params))
     const promise = createRequestPromise({
       timeout,
