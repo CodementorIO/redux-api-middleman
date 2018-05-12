@@ -11,9 +11,6 @@ const mockAxiosPromise = new Promise((resolve, reject) => {
       key_1: 'val_1'
     }
   }
-  const error = {
-    response: {}
-  }
   process.nextTick(
     () => resolve(res)
   )
