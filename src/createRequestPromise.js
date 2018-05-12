@@ -19,14 +19,6 @@ function actionWith (action, toMerge) {
   return _merge(ac, toMerge)
 }
 
-function isUrlencodedContentType (headersObject) {
-  let contentTypeKey = Object.keys(headersObject).find(key => key.toLowerCase() === 'content-type')
-  if (!contentTypeKey) {
-    return false
-  }
-  return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
-}
-
 export default function ({
   timeout,
   generateDefaultParams,
@@ -68,14 +60,12 @@ export default function ({
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        let isUrlencoded = isUrlencodedContentType(headersObject)
-
         let configs = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: isUrlencoded ? qs.stringify(sendObject) : sendObject,
+          data: generateBody({ headersObject, sendObject }),
           withCredentials: params.withCredentials,
           timeout
         }, omitKeys)
@@ -113,7 +103,7 @@ export default function ({
       function handleError (err) {
         dispatchErrorType(err)
         processAfterError()
-        reject(err)
+        reject(new Error(err))
       }
 
       function dispatchErrorType (err) {
@@ -146,6 +136,21 @@ export default function ({
         body = body || {}
         query = query || {}
         return { headers, body, query }
+      }
+
+      function isUrlencodedContentType (headersObject) {
+        let contentTypeKey = Object.keys(headersObject).find(
+          key => key.toLowerCase() === 'content-type'
+        )
+        if (!contentTypeKey) {
+          return false
+        }
+        return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
+      }
+      
+      function generateBody ({ headersObject, sendObject }) {
+        const isUrlencoded = isUrlencodedContentType(headersObject)
+        return isUrlencoded ? qs.stringify(sendObject) : sendObject
       }
     })
   }
