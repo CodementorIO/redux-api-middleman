@@ -1,4 +1,4 @@
-import Promise from 'bluebird'
+import Promise from 'yaku/lib/yaku.core'
 import { CALL_API } from '../src'
 import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'

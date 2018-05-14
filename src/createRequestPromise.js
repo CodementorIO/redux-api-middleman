@@ -1,5 +1,5 @@
 
-import Promise from 'bluebird'
+import Promise from 'yaku/lib/yaku.core'
 import qs from 'qs'
 import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'

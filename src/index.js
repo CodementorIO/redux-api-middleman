@@ -1,4 +1,4 @@
-import Promise from 'bluebird'
+import Promise from 'yaku/lib/yaku.core'
 import createRequestPromise from './createRequestPromise'
 
 export const CALL_API = Symbol('CALL_API')
