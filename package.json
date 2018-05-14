@@ -6,9 +6,16 @@
   "jest": {
     "testEnvironment": "node"
   },
+  "size-limit": [
+    {
+      "path": "src/index.js"
+    }
+  ],
   "scripts": {
     "test": "jest",
     "test:ci": "jest",
+    "size": "size-limit",
+    "size:why": "size-limit --why",
     "build": "babel src --out-dir lib",
     "clear": "rm -rf lib/*",
     "release:patch": "yarn run build && release patch",
@@ -31,7 +38,8 @@
     "nock": "^9.0.22",
     "release": "^3.1.6",
     "sinon": "^1.17.4",
-    "sinon-chai": "^2.8.0"
+    "sinon-chai": "^2.8.0",
+    "size-limit": "^0.18.0"
   },
   "dependencies": {
     "axios": "^0.16.2",
