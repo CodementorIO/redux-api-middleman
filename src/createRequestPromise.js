@@ -1,6 +1,6 @@
 
 import Promise from 'bluebird'
-
+import qs from 'qs'
 import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
@@ -60,15 +60,17 @@ export default function ({
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        axios(omit({
+        let configs = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
           params: queryObject,
-          data: sendObject,
+          data: generateBody({ headersObject, sendObject }),
           withCredentials: params.withCredentials,
           timeout
-        }, omitKeys))
+        }, omitKeys)
+
+        axios(configs)
         .then((res)=> {
           let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
           dispatchSuccessType(resBody)
@@ -101,7 +103,7 @@ export default function ({
       function handleError (err) {
         dispatchErrorType(err)
         processAfterError()
-        reject(err)
+        reject(new Error(err))
       }
 
       function dispatchErrorType (err) {
@@ -134,6 +136,21 @@ export default function ({
         body = body || {}
         query = query || {}
         return { headers, body, query }
+      }
+
+      function isUrlencodedContentType (headersObject) {
+        let contentTypeKey = Object.keys(headersObject).find(
+          key => key.toLowerCase() === 'content-type'
+        )
+        if (!contentTypeKey) {
+          return false
+        }
+        return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
+      }
+      
+      function generateBody ({ headersObject, sendObject }) {
+        const isUrlencoded = isUrlencodedContentType(headersObject)
+        return isUrlencoded ? qs.stringify(sendObject) : sendObject
       }
     })
   }
