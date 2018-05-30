@@ -43,10 +43,11 @@
   },
   "dependencies": {
     "axios": "^0.16.2",
-    "bluebird": "^3.4.0",
     "humps": "^1.1.0",
     "jest": "^21.2.1",
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "query-string": "^6.1.0",
+    "yaku": "^0.18.6"
   },
   "licence": "MIT"
 }

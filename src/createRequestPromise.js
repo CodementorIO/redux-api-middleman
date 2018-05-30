@@ -1,6 +1,6 @@
 
-import Promise from 'bluebird'
-import qs from 'qs'
+import Promise from 'yaku/lib/yaku.core'
+import qs from 'query-string'
 import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
@@ -147,7 +147,7 @@ export default function ({
         }
         return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
       }
-      
+
       function generateBody ({ headersObject, sendObject }) {
         const isUrlencoded = isUrlencodedContentType(headersObject)
         return isUrlencoded ? qs.stringify(sendObject) : sendObject
