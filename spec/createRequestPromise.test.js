@@ -83,7 +83,7 @@ describe('createRequestPromise', () => {
   })
   it('should call axios with `data` key when method is `post`', () => {
     mockParams.method = 'post'
-    const promise = createRequestPromise({
+    createRequestPromise({
       timeout,
       generateDefaultParams,
       createCallApiAction,
@@ -107,7 +107,7 @@ describe('createRequestPromise', () => {
       }
     })
     extractParams.mockReturnValueOnce(Object.assign({}, params))
-    const promise = createRequestPromise({
+    createRequestPromise({
       timeout,
       generateDefaultParams,
       createCallApiAction,
@@ -132,7 +132,7 @@ describe('createRequestPromise', () => {
       }
     })
     extractParams.mockReturnValueOnce(Object.assign({}, params))
-    const promise = createRequestPromise({
+    createRequestPromise({
       timeout,
       generateDefaultParams,
       createCallApiAction,
