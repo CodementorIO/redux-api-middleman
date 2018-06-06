@@ -341,7 +341,7 @@ After the server responds fails, an action of type `errorType` would be dispatch
 The action would contain:
 
 - the key-val pairs other than `CALL_API` in the action object
-- an extra `error` key, with its value be the error object returned by [`superagent`](https://visionmedia.github.io/superagent/)
+- an extra `error` key, with its value be the error object returned by [`axios`](https://github.com/axios/axios)
 
 # LICENCE:
 MIT

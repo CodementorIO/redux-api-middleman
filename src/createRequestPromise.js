@@ -78,7 +78,7 @@ export default function ({
           resolve(resBody)
         })
         .catch((error)=> {
-          let err = error.response
+          let err = prepareErroPayload(error)
           function proceedError () {
             handleError(err)
           }
@@ -99,6 +99,20 @@ export default function ({
 
       }
       sendRequest()
+
+      function prepareErroPayload (error) {
+        let res = error.response || {}
+        let backwardCompatibleError = addResponseKeyAsSuperAgent(res)
+        return backwardCompatibleError
+      }
+
+      function addResponseKeyAsSuperAgent (res) {
+        return Object.assign({}, res, {
+          response: {
+            body: res.data
+          }
+        })
+      }
 
       function handleError (err) {
         dispatchErrorType(err)

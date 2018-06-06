@@ -85,9 +85,9 @@ describe('Middleware::Api', ()=> {
                            .query(decamelizeKeys({ queryKey: 'query-val' }))
                            .reply(200, response1)
     }
-    function nockRequest2 (status = 200) {
+    function nockRequest2 (status = 200, payload) {
       return nock(BASE_URL).get('/the-url/the-id-1')
-                           .reply(status, response2)
+                           .reply(status, payload || response2)
     }
 
     afterEach(()=> {
@@ -374,10 +374,17 @@ describe('Middleware::Api', ()=> {
     })
 
     describe('when one of the apis failed', ()=> {
+      let errorPayload
       beforeEach(()=> {
+        errorPayload = {
+          data: {
+            AAA: 'AAAAAAAAAA'
+          }
+        }
         nockScope1 = nockRequest1()
-        nockScope2 = nockRequest2(400)
+        nockScope2 = nockRequest2(400, errorPayload)
       })
+
       it('sends request until it\'s failed', (done)=> {
         let promise = apiMiddleware({ getState, dispatch })(next)(action)
         promise.then(()=> {
@@ -414,6 +421,19 @@ describe('Middleware::Api', ()=> {
         promise.then(()=> {
           expect(dispatchedAction.type).to.equal(errorType2)
           expect(dispatchedAction.error.status).to.equal(400)
+          done()
+        })
+      })
+      it('dispatches errorType with backward compatible error payload', (done)=> {
+        let dispatchedAction
+        dispatch = function(a) {
+          dispatchedAction = a
+        }
+        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+        promise.then(()=> {
+          expect(dispatchedAction.type).to.equal(errorType2)
+          expect(dispatchedAction.error.data).to.eql(errorPayload)
+          expect(dispatchedAction.error.response.body).to.eql(errorPayload)
           done()
         })
       })
