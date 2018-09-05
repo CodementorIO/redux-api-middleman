@@ -1,23 +1,15 @@
-
+import axios from 'axios'
 import Promise from 'yaku/lib/yaku.core'
-import qs from 'qs'
-import _merge from 'lodash/merge'
-import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
 import omit from 'lodash/omit'
-
 import { camelizeKeys, decamelizeKeys } from 'humps'
+
 import { CALL_API } from './'
-
-import axios from 'axios'
-
-function actionWith (action, toMerge) {
-  let ac = _cloneDeep(action)
-  if (ac[CALL_API]) {
-    delete ac[CALL_API]
-  }
-  return _merge(ac, toMerge)
-}
+import {
+  actionWith,
+  addResponseKeyAsSuperAgent,
+  generateBody
+} from './utils'
 
 export default function ({
   timeout,
@@ -60,7 +52,7 @@ export default function ({
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        let configs = omit({
+        let config = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
@@ -70,7 +62,7 @@ export default function ({
           timeout
         }, omitKeys)
 
-        axios(configs)
+        axios(config)
         .then((res)=> {
           let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
           dispatchSuccessType(resBody)
@@ -78,22 +70,29 @@ export default function ({
           resolve(resBody)
         })
         .catch((error)=> {
-          let err = prepareErrorPayload(error)
-          function proceedError () {
-            handleError(err)
-          }
-          if (replayTimes === maxReplayTimes) {
-            handleError(
-              new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
-            )
+          // https://github.com/axios/axios#handling-errors
+          let serverError = !!error.response || !!error.request
+
+          if (!serverError) {
+            console.error(error)
           } else {
-            replayTimes += 1
-            errorInterceptor({
-              proceedError,
-              err,
-              getState,
-              replay: sendRequest
-            })
+            let err = prepareErrorPayload(error)
+            function proceedError () {
+              handleError(err)
+            }
+            if (replayTimes === maxReplayTimes) {
+              handleError(
+                new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
+              )
+            } else {
+              replayTimes += 1
+              errorInterceptor({
+                proceedError,
+                err,
+                getState,
+                replay: sendRequest
+              })
+            }
           }
         })
 
@@ -106,31 +105,24 @@ export default function ({
         return backwardCompatibleError
       }
 
-      function addResponseKeyAsSuperAgent (res) {
-        return Object.assign({}, res, {
-          response: {
-            body: res.data
-          }
-        })
-      }
-
       function handleError (err) {
-        dispatchErrorType(err)
-        processAfterError()
-        reject(new Error(err))
+        const _err = err instanceof Error ? err : new Error(err)
+        dispatchErrorType(_err)
+        processAfterError(_err)
+        reject(_err)
       }
 
-      function dispatchErrorType (err) {
+      function dispatchErrorType (error) {
         if ( params.errorType ) {
           dispatch(actionWith(apiAction, {
             type: params.errorType,
-            error: err
+            error
           }))
         }
       }
-      function processAfterError () {
+      function processAfterError (error) {
         if (_isFunction(params.afterError)) {
-          params.afterError({ getState })
+          params.afterError({ getState, error })
         }
       }
       function dispatchSuccessType (resBody) {
@@ -150,21 +142,6 @@ export default function ({
         body = body || {}
         query = query || {}
         return { headers, body, query }
-      }
-
-      function isUrlencodedContentType (headersObject) {
-        let contentTypeKey = Object.keys(headersObject).find(
-          key => key.toLowerCase() === 'content-type'
-        )
-        if (!contentTypeKey) {
-          return false
-        }
-        return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
-      }
-
-      function generateBody ({ headersObject, sendObject }) {
-        const isUrlencoded = isUrlencodedContentType(headersObject)
-        return isUrlencoded ? qs.stringify(sendObject) : sendObject
       }
     })
   }

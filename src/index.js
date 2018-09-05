@@ -1,5 +1,6 @@
 import Promise from 'yaku/lib/yaku.core'
 import createRequestPromise from './createRequestPromise'
+import { paramsExtractor } from './utils'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
@@ -68,42 +69,3 @@ export default ({
   }
 }
 
-export function paramsExtractor ({ baseUrl }) {
-  return (callApi)=> {
-    let {
-      method,
-      path,
-      query,
-      body,
-      headers,
-      url,
-      camelizeResponse = true,
-      decamelizeRequest = true,
-      withCredentials = true,
-      successType,
-      sendingType,
-      errorType,
-      afterSuccess,
-      afterError
-    } = callApi
-
-    url = url || `${baseUrl}${path}`
-
-    return {
-      method,
-      url,
-      query,
-      body,
-      headers,
-      successType,
-      sendingType,
-      errorType,
-      afterSuccess,
-      camelizeResponse,
-      decamelizeRequest,
-      withCredentials,
-      afterError
-    }
-
-  }
-}
