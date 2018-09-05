@@ -6,7 +6,6 @@ export const CHAIN_API = Symbol('CHAIN_API')
 export const DEFAULT_MAX_REPLAY_TIMES = 2
 export const DEFAULT_TIMEOUT = 20000 //ms
 
-
 let defaultInterceptor = function({ proceedError, err, replay, getState }) {
   proceedError()
 }
