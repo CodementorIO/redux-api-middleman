@@ -21,16 +21,13 @@ export default function ({
   extractParams,
   maxReplayTimes
 }) {
-  return (prevBody)=> {
-
+  return (prevBody) => {
     let apiAction = createCallApiAction(prevBody)
     let params = extractParams(apiAction[CALL_API])
     let replayTimes = 0
 
-    return new Promise((resolve, reject)=> {
-
+    return new Promise((resolve, reject) => {
       function sendRequest (interceptorParams = {}) {
-
         if (params.sendingType) {
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
@@ -45,7 +42,7 @@ export default function ({
           interceptorParams.headers
         )
 
-        if(params.decamelizeRequest) {
+        if (params.decamelizeRequest) {
           queryObject = decamelizeKeys(queryObject)
           sendObject = decamelizeKeys(sendObject)
         }
@@ -63,38 +60,35 @@ export default function ({
         }, omitKeys)
 
         axios(config)
-        .then((res)=> {
-          let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
-          dispatchSuccessType(resBody)
-          processAfterSuccess(resBody)
-          resolve(resBody)
-        }, (error)=> {
+          .then((res) => {
+            let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
+            dispatchSuccessType(resBody)
+            processAfterSuccess(resBody)
+            resolve(resBody)
+          }, (error) => {
           // https://github.com/axios/axios#handling-errors
-          let serverError = !!error.response || !!error.request
+            let serverError = !!error.response || !!error.request
 
-          if (!serverError) {
-            console.error(error)
-          } else {
-            let err = prepareErrorPayload(error)
-            function proceedError () {
-              handleError(err)
-            }
-            if (replayTimes === maxReplayTimes) {
-              handleError(
-                new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
-              )
+            if (!serverError) {
+              console.error(error)
             } else {
-              replayTimes += 1
-              errorInterceptor({
-                proceedError,
-                err,
-                getState,
-                replay: sendRequest
-              })
-            }
-          }
-        })
+              let err = prepareErrorPayload(error)
 
+              if (replayTimes === maxReplayTimes) {
+                handleError(
+                  new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
+                )
+              } else {
+                replayTimes += 1
+                errorInterceptor({
+                  proceedError: () => handleError(err),
+                  err,
+                  getState,
+                  replay: sendRequest
+                })
+              }
+            }
+          })
       }
       sendRequest()
 
@@ -106,19 +100,19 @@ export default function ({
 
       function handleError (err) {
         dispatchErrorType(err)
-        processAfterError(err)
+        processAfterError()
         reject(err)
       }
 
       function dispatchErrorType (error) {
-        if ( params.errorType ) {
+        if (params.errorType) {
           dispatch(actionWith(apiAction, {
             type: params.errorType,
             error
           }))
         }
       }
-      function processAfterError (error) {
+      function processAfterError () {
         if (_isFunction(params.afterError)) {
           params.afterError({ getState })
         }
@@ -144,4 +138,3 @@ export default function ({
     })
   }
 }
-

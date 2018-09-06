@@ -29,14 +29,13 @@ function _isUrlencodedContentType (headersObject) {
   return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
 }
 
-
 export function generateBody ({ headersObject, sendObject }) {
   const isUrlencoded = _isUrlencodedContentType(headersObject)
   return isUrlencoded ? qs.stringify(sendObject) : sendObject
 }
 
 export function paramsExtractor ({ baseUrl }) {
-  return (callApi)=> {
+  return (callApi) => {
     let {
       method,
       path,
