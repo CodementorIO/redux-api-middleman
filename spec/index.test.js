@@ -1,10 +1,15 @@
 import nock from 'nock'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
+import log from '../src/log'
 import createApiMiddleware, {
   CALL_API,
   CHAIN_API
 } from '../src'
+
+jest.mock('../src/log', () => ({
+  error: jest.fn()
+}))
 
 export const BASE_URL = 'http://localhost:3000'
 
@@ -35,11 +40,13 @@ describe('Middleware::Api', () => {
     let path1 = '/the-url/path-1'
     let path2 = `/the-url/${response1.id}`
 
+    let afterError1
     let afterError2
 
     beforeEach(() => {
       afterSuccess1 = jest.fn()
       afterSuccess2 = jest.fn()
+      afterError1 = jest.fn()
       afterError2 = jest.fn()
       action = {
         [CHAIN_API]: [
@@ -52,6 +59,7 @@ describe('Middleware::Api', () => {
                 query: decamelizeKeys({ queryKey: 'query-val' }),
                 path: path1,
                 afterSuccess: afterSuccess1,
+                afterError: afterError1,
                 successType: successType1,
                 sendingType: sendingType1
               }
@@ -275,6 +283,16 @@ describe('Middleware::Api', () => {
         expect(afterSuccess2).toBeCalledWith({
           getState, dispatch, response: camelizeKeys(response2)
         })
+      })
+
+      it('only catches request error', async () => {
+        afterSuccess1.mockImplementation(() => {
+          throw new Error('error casued by afterSuccess')
+        })
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(afterError1).not.toBeCalled()
+        expect(afterSuccess1).toBeCalled()
+        expect(log.error).toBeCalled()
       })
       it('trigger sendintType for all endpoints', async () => {
         await apiMiddleware({ dispatch, getState })(next)(action)

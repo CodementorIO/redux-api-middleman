@@ -3,6 +3,8 @@ import _merge from 'lodash/merge'
 import _cloneDeep from 'lodash/cloneDeep'
 import { CALL_API } from './'
 
+export const log = console
+
 export function actionWith (action, toMerge) {
   let ac = _cloneDeep(action)
   if (ac[CALL_API]) {

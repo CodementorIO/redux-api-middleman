@@ -10,6 +10,7 @@ import {
   addResponseKeyAsSuperAgent,
   generateBody
 } from './utils'
+import log from './log'
 
 export default function ({
   timeout,
@@ -65,12 +66,12 @@ export default function ({
             dispatchSuccessType(resBody)
             processAfterSuccess(resBody)
             resolve(resBody)
-          }, (error) => {
+          }).catch((error) => {
           // https://github.com/axios/axios#handling-errors
             let serverError = !!error.response || !!error.request
 
             if (!serverError) {
-              console.error(error)
+              handleOperationError(error)
             } else {
               let err = prepareErrorPayload(error)
 
@@ -90,7 +91,13 @@ export default function ({
             }
           })
       }
+
       sendRequest()
+
+      function handleOperationError (error) {
+        log.error(error)
+        reject(error)
+      }
 
       function prepareErrorPayload (error) {
         let res = error.response || {}

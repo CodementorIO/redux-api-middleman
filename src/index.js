@@ -51,17 +51,10 @@ export default ({
       })
 
       let overall = promiseCreators.reduce((promise, createReqPromise) => {
-        return promise.then((body) => {
-          return createReqPromise(body)
-        })
+        return promise.then(createReqPromise)
       }, Promise.resolve())
 
-      overall.finally(() => {
-        resolve()
-      })
-        .catch((e) => {
-          reject(e)
-        })
+      overall.finally(resolve).catch(reject)
     })
   }
 }
