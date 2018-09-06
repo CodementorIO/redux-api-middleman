@@ -1,31 +1,31 @@
 import nock from 'nock'
-import sinon from 'sinon'
-import sinonChai from 'sinon-chai'
-import chai, { expect } from 'chai'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
+import log from '../src/log'
 import createApiMiddleware, {
   CALL_API,
-  CHAIN_API,
-  paramsExtractor
+  CHAIN_API
 } from '../src'
 
-chai.use(sinonChai)
+jest.mock('../src/log', () => ({
+  error: jest.fn()
+}))
 
-describe('Middleware::Api', ()=> {
+export const BASE_URL = 'http://localhost:3000'
+
+describe('Middleware::Api', () => {
   let apiMiddleware
   let dispatch, getState, next
   let action
-  const BASE_URL = 'http://localhost:3000'
 
-  beforeEach(()=> {
+  beforeEach(() => {
     apiMiddleware = createApiMiddleware({ baseUrl: BASE_URL })
-    dispatch = sinon.stub()
-    getState = sinon.stub()
-    next = sinon.stub()
+    dispatch = jest.fn()
+    getState = jest.fn()
+    next = jest.fn()
   })
 
-  describe('when called with [CHAIN_API]', ()=> {
+  describe('when called with [CHAIN_API]', () => {
     let successType1 = 'ON_SUCCESS_1'
     let successType2 = 'ON_SUCCESS_2'
     let sendingType1 = 'ON_SENDING_1'
@@ -40,15 +40,17 @@ describe('Middleware::Api', ()=> {
     let path1 = '/the-url/path-1'
     let path2 = `/the-url/${response1.id}`
 
+    let afterError1
     let afterError2
 
-    beforeEach(()=> {
-      afterSuccess1 = sinon.stub()
-      afterSuccess2 = sinon.stub()
-      afterError2 = sinon.stub()
+    beforeEach(() => {
+      afterSuccess1 = jest.fn()
+      afterSuccess2 = jest.fn()
+      afterError1 = jest.fn()
+      afterError2 = jest.fn()
       action = {
         [CHAIN_API]: [
-          ()=> {
+          () => {
             return {
               extra1: 'val1',
               [CALL_API]: {
@@ -57,12 +59,13 @@ describe('Middleware::Api', ()=> {
                 query: decamelizeKeys({ queryKey: 'query-val' }),
                 path: path1,
                 afterSuccess: afterSuccess1,
+                afterError: afterError1,
                 successType: successType1,
                 sendingType: sendingType1
               }
             }
           },
-          (_resBody1)=> {
+          (_resBody1) => {
             return {
               extra2: 'val2',
               [CALL_API]: {
@@ -82,15 +85,15 @@ describe('Middleware::Api', ()=> {
 
     function nockRequest1 () {
       return nock(BASE_URL).post(path1)
-                           .query(decamelizeKeys({ queryKey: 'query-val' }))
-                           .reply(200, response1)
+        .query(decamelizeKeys({ queryKey: 'query-val' }))
+        .reply(200, response1)
     }
     function nockRequest2 (status = 200, payload) {
       return nock(BASE_URL).get('/the-url/the-id-1')
-                           .reply(status, payload || response2)
+        .reply(status, payload || response2)
     }
 
-    afterEach(()=> {
+    afterEach(() => {
       nock.cleanAll()
     })
 
@@ -99,10 +102,9 @@ describe('Middleware::Api', ()=> {
       let path = '/the-path'
       let nockScope
       beforeEach(() => {
-        nock.cleanAll()
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
                   url: `${host}${path}`,
@@ -110,31 +112,26 @@ describe('Middleware::Api', ()=> {
                   successType: successType1
                 }
               }
-            }]
+            }
+          ]
         }
       })
-      it('does not send body', (done) => {
-        nockScope = nock(host).get(path, body => {
-          return !body
-        }).reply(200, response1)
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          nockScope.done()
-          done()
-        })
+      it('does not send body', async () => {
+        nockScope = nock(host).get(path, body => !body).reply(200, response1)
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        nockScope.done()
       })
     })
 
-    describe('when `url` is given in CALL_API', ()=> {
+    describe('when `url` is given in CALL_API', () => {
       let host = 'http://another-host.com'
       let path = '/the-path'
       let nockScope
 
-      beforeEach(()=> {
-        nock.cleanAll()
+      beforeEach(() => {
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
                   url: `${host}${path}`,
@@ -146,25 +143,20 @@ describe('Middleware::Api', ()=> {
         }
         nockScope = nock(host).get(path).reply(200, response1)
       })
-      it('takes precedence over path', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-
-        promise.then(()=> {
-          nockScope.done()
-          done()
-        })
+      it('takes precedence over path', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        nockScope.done()
       })
     })
 
-    describe('when `camelizeResponse` is false', ()=> {
+    describe('when `camelizeResponse` is false', () => {
       let path = '/the-path'
       let nockScope
 
-      beforeEach(()=> {
-        nock.cleanAll()
+      beforeEach(() => {
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
                   path: `${path}`,
@@ -177,32 +169,26 @@ describe('Middleware::Api', ()=> {
         }
         nockScope = nock(BASE_URL).get(path).reply(200, response1)
       })
-      it('does not camelize response', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been
-            .calledWith({
-              type: successType1,
-              response: response1
-            })
-          nockScope.done()
-          done()
+      it('does not camelize response', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({
+          type: successType1,
+          response: response1
         })
+        nockScope.done()
       })
     })
 
-    describe('when `decamelizeRequest` is false', ()=> {
+    describe('when `decamelizeRequest` is false', () => {
       let path = '/the-path'
-      let nockScope
 
-      beforeEach(()=> {
-        nock.cleanAll()
+      beforeEach(() => {
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
-                  path: `${path}`,
+                  path,
                   method: 'post',
                   body: { camelCase: 'OYOYO' },
                   decamelizeRequest: false,
@@ -211,42 +197,37 @@ describe('Middleware::Api', ()=> {
               }
             }]
         }
-        nockScope = nock(BASE_URL).post(path, { camelCase: 'OYOYO' }).reply(200, response1)
+        nock(BASE_URL).post(path, { camelCase: 'OYOYO' }).reply(200, response1)
       })
-      it('should pass', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been
-            .calledWith({
-              type: successType1,
-              response: camelizeKeys(response1)
-            })
-          nockScope.done()
-          done()
+      it('should pass', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({
+          type: successType1,
+          response: camelizeKeys(response1)
         })
       })
     })
 
-    describe('when generateDefaultParams is provided', ()=> {
+    describe('when generateDefaultParams is provided', () => {
       let path = '/the-path'
       let nockScope
-      let apiMiddleware
       let generateDefaultParams
-      beforeEach(()=> {
-        generateDefaultParams = sinon.stub()
-        generateDefaultParams.returns({
+      beforeEach(() => {
+        generateDefaultParams = jest.fn(() => ({
           body: { additionalBodyKey: 'additionalBodyVal' },
           query: { additionalKey: 'additionalVal' },
           headers: { additionalHeadersKey: 'additionalHeadersVal' }
+        }))
+        apiMiddleware = createApiMiddleware({
+          baseUrl: BASE_URL,
+          generateDefaultParams
         })
-        apiMiddleware = createApiMiddleware({ baseUrl: BASE_URL, generateDefaultParams })
       })
 
-      beforeEach(()=> {
-        nock.cleanAll()
+      beforeEach(() => {
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
                   path: `${path}`,
@@ -256,12 +237,13 @@ describe('Middleware::Api', ()=> {
                   successType: successType1
                 }
               }
-            }]
+            }
+          ]
         }
 
         nockScope = nock(BASE_URL)
           .matchHeader('additionalHeadersKey', 'additionalHeadersVal')
-          .matchHeader('headersKey', 'headersVal' )
+          .matchHeader('headersKey', 'headersVal')
           .post(path, decamelizeKeys({
             additionalBodyKey: 'additionalBodyVal',
             bodyKey: 'bodyVal'
@@ -271,86 +253,83 @@ describe('Middleware::Api', ()=> {
           }))
           .reply(200, response1)
       })
-      it('merge generateDefaultParams into request', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-
-        promise.then(()=> {
-          expect(dispatch).to.have.been.calledWith({
-            type: successType1,
-            response: camelizeKeys(response1)
-          })
-          nockScope.done()
-          done()
+      it('merge generateDefaultParams into request', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({
+          type: successType1,
+          response: camelizeKeys(response1)
         })
+        nockScope.done()
       })
     })
 
-
-    describe('when all API calls are success', ()=> {
-      beforeEach(()=> {
+    describe('when all API calls are success', () => {
+      beforeEach(() => {
         nockScope1 = nockRequest1()
         nockScope2 = nockRequest2()
       })
 
-      it('sends requests to all endpoints', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
+      it('sends requests to all endpoints', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        nockScope1.done()
+        nockScope2.done()
+      })
 
-        promise.then(()=> {
-          nockScope1.done()
-          nockScope2.done()
-          done()
+      it('trigger afterSuccess for all endpoints', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(afterSuccess1).toBeCalledWith({
+          getState, dispatch, response: camelizeKeys(response1)
+        })
+        expect(afterSuccess2).toBeCalledWith({
+          getState, dispatch, response: camelizeKeys(response2)
         })
       })
-      it('trigger afterSuccess for all endpoints', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response1) })
-          expect(afterSuccess2).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response2) })
-          done()
+
+      it('only catches request error', async () => {
+        afterSuccess1.mockImplementation(() => {
+          throw new Error('error casued by afterSuccess')
         })
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(afterError1).not.toBeCalled()
+        expect(afterSuccess1).toBeCalled()
+        expect(log.error).toBeCalled()
       })
-      it('trigger sendintType for all endpoints', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been
-            .calledWith({ type: sendingType1, extra1: 'val1' })
-          expect(dispatch).to.have.been
-            .calledWith({ type: sendingType2,  extra2: 'val2' })
-          done()
+      it('trigger sendintType for all endpoints', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({ type: sendingType1, extra1: 'val1' })
+        expect(dispatch).toBeCalledWith({ type: sendingType2, extra2: 'val2' })
+      })
+
+      it('dispatch successType for all endpoints', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({
+          type: successType1, response: camelizeKeys(response1), extra1: 'val1'
         })
-      })
-      it('dispatch successType for all endpoints', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been
-            .calledWith({ type: successType1, response: camelizeKeys(response1), extra1: 'val1' })
-          expect(dispatch).to.have.been
-            .calledWith({ type: successType2, response: camelizeKeys(response2), extra2: 'val2' })
-          done()
+        expect(dispatch).toBeCalledWith({
+          type: successType2, response: camelizeKeys(response2), extra2: 'val2'
         })
       })
     })
 
-    describe('when one of the apis timeout', ()=> {
+    describe('when one of the apis timeout', () => {
       let timeout = 50
       let host = 'http://another-host.com'
       let path = '/the-path'
       let timeoutErrorType = 'TIMEOUT_ERROR'
       let nockScope
-      let apiMiddleware, dispatchedAction
+      let dispatchedAction
 
-      beforeEach(()=> {
-        dispatch = function(a) {
+      beforeEach(() => {
+        dispatch = (a) => {
           dispatchedAction = a
         }
         apiMiddleware = createApiMiddleware({
           baseUrl: BASE_URL,
-          timeout,
+          timeout
         })
-        nock.cleanAll()
         action = {
           [CHAIN_API]: [
-            ()=> {
+            () => {
               return {
                 [CALL_API]: {
                   url: `${host}${path}`,
@@ -358,24 +337,22 @@ describe('Middleware::Api', ()=> {
                   errorType: timeoutErrorType
                 }
               }
-            }]
+            }
+          ]
         }
-        nockScope = nock(host).get(path).delay(timeout+1).reply(200)
+        nockScope = nock(host).get(path).delay(timeout + 1).reply(200)
       })
 
-      it('dispatch error when timeout', (done) => {
-        apiMiddleware({ dispatch, getState })(next)(action)
-          .then(()=> {
-            expect(dispatchedAction.type).to.equal(timeoutErrorType)
-            nockScope.done()
-            done()
-          })
+      it('dispatch error when timeout', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatchedAction.type).toEqual(timeoutErrorType)
+        nockScope.done()
       })
     })
 
-    describe('when one of the apis failed', ()=> {
+    describe('when one of the apis failed', () => {
       let errorPayload
-      beforeEach(()=> {
+      beforeEach(() => {
         errorPayload = {
           data: {
             AAA: 'AAAAAAAAAA'
@@ -385,165 +362,145 @@ describe('Middleware::Api', ()=> {
         nockScope2 = nockRequest2(400, errorPayload)
       })
 
-      it('sends request until it\'s failed', (done)=> {
-        let promise = apiMiddleware({ getState, dispatch })(next)(action)
-        promise.then(()=> {
-          nockScope1.done()
-          nockScope2.done()
-          done()
-        })
+      it('sends request until it is failed', async () => {
+        await apiMiddleware({ getState, dispatch })(next)(action)
+        nockScope1.done()
+        nockScope2.done()
       })
-      it('triggers afterSuccess and dispatches success for the ok ones', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatch).to.have.been.calledWith({
-            extra1: 'val1',
-            type: successType1,
-            response: camelizeKeys(response1)
-          })
-          expect(afterSuccess1).to.have.been.calledWith({ getState, dispatch, response: camelizeKeys(response1) })
-          done()
+
+      it('triggers afterSuccess and dispatches success for the ok ones', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatch).toBeCalledWith({
+          extra1: 'val1',
+          type: successType1,
+          response: camelizeKeys(response1)
         })
-      })
-      it('trigger afterError of path2', (done)=> {
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(afterError2).to.have.been.calledWith({ getState })
-          done()
-        })
-      })
-      it('dispatches errorType of path2', (done)=> {
-        let dispatchedAction
-        dispatch = function(a) {
-          dispatchedAction = a
-        }
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatchedAction.type).to.equal(errorType2)
-          expect(dispatchedAction.error.status).to.equal(400)
-          done()
-        })
-      })
-      it('dispatches errorType with backward compatible error payload', (done)=> {
-        let dispatchedAction
-        dispatch = function(a) {
-          dispatchedAction = a
-        }
-        let promise = apiMiddleware({ dispatch, getState })(next)(action)
-        promise.then(()=> {
-          expect(dispatchedAction.type).to.equal(errorType2)
-          expect(dispatchedAction.error.data).to.eql(errorPayload)
-          expect(dispatchedAction.error.response.body).to.eql(errorPayload)
-          done()
+        expect(afterSuccess1).toBeCalledWith({
+          getState, dispatch, response: camelizeKeys(response1)
         })
       })
 
-      describe('errorInterceptor behaviors', ()=> {
-        it('handles dispatch and rejection stuff via `proceedError`', (done)=> {
-          let spy = sinon.spy()
+      it('trigger afterError of path2', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(afterError2).toBeCalledWith({
+          getState
+        })
+      })
+
+      it('dispatches errorType of path2', async () => {
+        let dispatchedAction
+        dispatch = (a) => {
+          dispatchedAction = a
+        }
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatchedAction.type).toEqual(errorType2)
+        expect(dispatchedAction.error.status).toEqual(400)
+      })
+
+      it('dispatches errorType with backward compatible error payload', async () => {
+        let dispatchedAction
+        dispatch = (a) => {
+          dispatchedAction = a
+        }
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(dispatchedAction.type).toEqual(errorType2)
+        expect(dispatchedAction.error.data).toEqual(errorPayload)
+        expect(dispatchedAction.error.response.body).toEqual(errorPayload)
+      })
+
+      describe('errorInterceptor behaviors', () => {
+        it('handles dispatch and rejection stuff via `proceedError`', async () => {
+          let spy = jest.fn()
           let dispatchedAction
-          dispatch = function(a) {
+          dispatch = (a) => {
             dispatchedAction = a
           }
           apiMiddleware = createApiMiddleware({
             baseUrl: BASE_URL,
-            errorInterceptor: ({ proceedError, err, replay, getState })=> {
+            errorInterceptor: ({ proceedError, err, replay, getState }) => {
               spy()
-              expect(getState).to.equal(getState)
+              expect(getState).toEqual(getState)
               proceedError()
             }
           })
-          apiMiddleware({ dispatch, getState })(next)(action)
-            .then(()=> {
-              expect(spy).to.have.been.called
-              expect(dispatchedAction.type).to.equal(errorType2)
-              expect(dispatchedAction.error.status).to.equal(400)
-              done()
-            })
+          await apiMiddleware({ dispatch, getState })(next)(action)
+          expect(spy).toBeCalled()
+          expect(dispatchedAction.type).toEqual(errorType2)
+          expect(dispatchedAction.error.status).toEqual(400)
         })
 
-        describe('replay', ()=> {
+        describe('replay', () => {
           function repeat (times, fn) {
             for (var i = 0; i < times; i += 1) {
               fn()
             }
           }
-          it('resend the request', (done)=> {
+          it('resend the request', async () => {
             nockRequest2(400)
             let errTime = 0
             apiMiddleware = createApiMiddleware({
               baseUrl: BASE_URL,
-              errorInterceptor: ({ proceedError, err, replay, getState })=> {
-                if (errTime == 1) {
+              errorInterceptor: ({ proceedError, err, replay, getState }) => {
+                if (errTime === 1) {
                   proceedError()
                 } else {
                   replay()
-                  errTime ++
+                  errTime++
                 }
               }
             })
 
-            apiMiddleware({ dispatch, getState })(next)(action)
-              .then(()=> {
-                expect(errTime).to.equal(1)
-                done()
-              })
-              .catch(()=> {
-                done.fail()
-              })
+            await apiMiddleware({ dispatch, getState })(next)(action)
+            expect(errTime).toEqual(1)
           })
-          it('replay no more than `maxReplayTimes`', (done) => {
+          it('replay no more than `maxReplayTimes`', async () => {
             let replayTimes = 0
             let maxReplayTimes = 6
             let dispatchedAction
-            repeat(6, ()=> nockRequest2(400))
-            dispatch = function(a) {
+            repeat(6, () => nockRequest2(400))
+            dispatch = (a) => {
               dispatchedAction = a
             }
             apiMiddleware = createApiMiddleware({
               baseUrl: BASE_URL,
               maxReplayTimes,
-              errorInterceptor: ({ proceedError, replay, _getState })=> {
-                replayTimes ++
+              errorInterceptor: ({ proceedError, replay, _getState }) => {
+                replayTimes++
                 replay()
               }
             })
-            apiMiddleware({ dispatch, getState })(next)(action)
-              .then(()=> {
-                expect(replayTimes).to.equal(6)
-                expect(dispatchedAction.type).to.equal(errorType2)
-                expect(dispatchedAction.error).to.be.an.instanceOf(Error)
-                expect(dispatchedAction.error.message).to.equal(
-                  `reached MAX_REPLAY_TIMES = ${maxReplayTimes}`
-                )
-                done()
-              })
+            await apiMiddleware({ dispatch, getState })(next)(action)
+            expect(replayTimes).toEqual(6)
+            expect(dispatchedAction.type).toEqual(errorType2)
+            expect(dispatchedAction.error).toBeInstanceOf(Error)
+            expect(dispatchedAction.error.message).toEqual(
+              `reached MAX_REPLAY_TIMES = ${maxReplayTimes}`
+            )
           })
         })
       })
     })
-
   })
 
-  describe('when action is without CALL_API and CHAIN_API', ()=> {
-    it('passes the action to next middleware', ()=> {
+  describe('when action is without CALL_API and CHAIN_API', () => {
+    it('passes the action to next middleware', async () => {
       let nextRetResult = {}
-      next.returns(nextRetResult)
-
+      next.mockReturnValue(nextRetResult)
       action = { type: 'not-CALL_API' }
-      let result = apiMiddleware({ dispatch, getState })(next)(action)
-      expect(next).to.have.been.calledWith(action)
-      expect(result).to.equal(nextRetResult)
+      let result = await apiMiddleware({ dispatch, getState })(next)(action)
+
+      expect(next).toBeCalledWith(action)
+      expect(result).toEqual(nextRetResult)
     })
   })
 
-  describe('when action is with `CALL_API`', ()=> {
+  describe('when action is with `CALL_API`', () => {
     let successType = 'ON_SUCCESS'
     let path = '/the-url/path'
     let dispatchedAction
 
-    beforeEach(()=> {
-      dispatch = function(a) {
+    beforeEach(() => {
+      dispatch = function (a) {
         dispatchedAction = a
       }
       action = {
@@ -554,29 +511,10 @@ describe('Middleware::Api', ()=> {
         }
       }
     })
-    it('forwards it to CHAIN_API as a special case', ()=> {
-      apiMiddleware({ dispatch, getState })(next)(action)
-      expect(dispatchedAction[CHAIN_API].length).to.equal(1)
-      expect(dispatchedAction[CHAIN_API][0]()).to.equal(action)
-    })
-  })
-
-  describe('#paramsExtractor', () => {
-    let params
-    const baseUrl = 'http://base'
-    const callApi = {
-      path: '/path'
-    }
-    beforeEach(() => {
-      params = paramsExtractor({ baseUrl })(callApi)
-    })
-    it('sets `url` with prefix baseUrl', () => {
-      expect(params.url).to.equal(
-        `${baseUrl}${callApi.path}`
-      )
-    })
-    it('defaults to set withCredentials to ture', () => {
-      expect(params.withCredentials).to.equal(true)
+    it('forwards it to CHAIN_API as a special case', async () => {
+      await apiMiddleware({ dispatch, getState })(next)(action)
+      expect(dispatchedAction[CHAIN_API].length).toEqual(1)
+      expect(dispatchedAction[CHAIN_API][0]()).toEqual(action)
     })
   })
 })

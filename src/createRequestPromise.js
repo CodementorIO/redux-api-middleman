@@ -1,23 +1,16 @@
-
+import axios from 'axios'
 import Promise from 'yaku/lib/yaku.core'
-import qs from 'qs'
-import _merge from 'lodash/merge'
-import _cloneDeep from 'lodash/cloneDeep'
 import _isFunction from 'lodash/isFunction'
 import omit from 'lodash/omit'
-
 import { camelizeKeys, decamelizeKeys } from 'humps'
+
 import { CALL_API } from './'
-
-import axios from 'axios'
-
-function actionWith (action, toMerge) {
-  let ac = _cloneDeep(action)
-  if (ac[CALL_API]) {
-    delete ac[CALL_API]
-  }
-  return _merge(ac, toMerge)
-}
+import {
+  actionWith,
+  addResponseKeyAsSuperAgent,
+  generateBody
+} from './utils'
+import log from './log'
 
 export default function ({
   timeout,
@@ -29,16 +22,13 @@ export default function ({
   extractParams,
   maxReplayTimes
 }) {
-  return (prevBody)=> {
-
+  return (prevBody) => {
     let apiAction = createCallApiAction(prevBody)
     let params = extractParams(apiAction[CALL_API])
     let replayTimes = 0
 
-    return new Promise((resolve, reject)=> {
-
+    return new Promise((resolve, reject) => {
       function sendRequest (interceptorParams = {}) {
-
         if (params.sendingType) {
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
@@ -53,14 +43,14 @@ export default function ({
           interceptorParams.headers
         )
 
-        if(params.decamelizeRequest) {
+        if (params.decamelizeRequest) {
           queryObject = decamelizeKeys(queryObject)
           sendObject = decamelizeKeys(sendObject)
         }
 
         let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        let configs = omit({
+        let config = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
@@ -70,35 +60,44 @@ export default function ({
           timeout
         }, omitKeys)
 
-        axios(configs)
-        .then((res)=> {
-          let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
-          dispatchSuccessType(resBody)
-          processAfterSuccess(resBody)
-          resolve(resBody)
-        })
-        .catch((error)=> {
-          let err = prepareErrorPayload(error)
-          function proceedError () {
-            handleError(err)
-          }
-          if (replayTimes === maxReplayTimes) {
-            handleError(
-              new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
-            )
-          } else {
-            replayTimes += 1
-            errorInterceptor({
-              proceedError,
-              err,
-              getState,
-              replay: sendRequest
-            })
-          }
-        })
+        axios(config)
+          .then((res) => {
+            let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
+            dispatchSuccessType(resBody)
+            processAfterSuccess(resBody)
+            resolve(resBody)
+          }).catch((error) => {
+          // https://github.com/axios/axios#handling-errors
+            let serverError = !!error.response || !!error.request
 
+            if (!serverError) {
+              handleOperationError(error)
+            } else {
+              let err = prepareErrorPayload(error)
+
+              if (replayTimes === maxReplayTimes) {
+                handleError(
+                  new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
+                )
+              } else {
+                replayTimes += 1
+                errorInterceptor({
+                  proceedError: () => handleError(err),
+                  err,
+                  getState,
+                  replay: sendRequest
+                })
+              }
+            }
+          })
       }
+
       sendRequest()
+
+      function handleOperationError (error) {
+        log.error(error)
+        reject(error)
+      }
 
       function prepareErrorPayload (error) {
         let res = error.response || {}
@@ -106,25 +105,17 @@ export default function ({
         return backwardCompatibleError
       }
 
-      function addResponseKeyAsSuperAgent (res) {
-        return Object.assign({}, res, {
-          response: {
-            body: res.data
-          }
-        })
-      }
-
       function handleError (err) {
         dispatchErrorType(err)
         processAfterError()
-        reject(new Error(err))
+        reject(err)
       }
 
-      function dispatchErrorType (err) {
-        if ( params.errorType ) {
+      function dispatchErrorType (error) {
+        if (params.errorType) {
           dispatch(actionWith(apiAction, {
             type: params.errorType,
-            error: err
+            error
           }))
         }
       }
@@ -151,22 +142,6 @@ export default function ({
         query = query || {}
         return { headers, body, query }
       }
-
-      function isUrlencodedContentType (headersObject) {
-        let contentTypeKey = Object.keys(headersObject).find(
-          key => key.toLowerCase() === 'content-type'
-        )
-        if (!contentTypeKey) {
-          return false
-        }
-        return headersObject[contentTypeKey] === 'application/x-www-form-urlencoded'
-      }
-
-      function generateBody ({ headersObject, sendObject }) {
-        const isUrlencoded = isUrlencodedContentType(headersObject)
-        return isUrlencoded ? qs.stringify(sendObject) : sendObject
-      }
     })
   }
 }
-
