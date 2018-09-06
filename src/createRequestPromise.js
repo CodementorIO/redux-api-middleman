@@ -68,8 +68,7 @@ export default function ({
           dispatchSuccessType(resBody)
           processAfterSuccess(resBody)
           resolve(resBody)
-        })
-        .catch((error)=> {
+        }, (error)=> {
           // https://github.com/axios/axios#handling-errors
           let serverError = !!error.response || !!error.request
 
@@ -106,10 +105,9 @@ export default function ({
       }
 
       function handleError (err) {
-        const _err = err instanceof Error ? err : new Error(err)
-        dispatchErrorType(_err)
-        processAfterError(_err)
-        reject(_err)
+        dispatchErrorType(err)
+        processAfterError(err)
+        reject(err)
       }
 
       function dispatchErrorType (error) {
@@ -122,7 +120,7 @@ export default function ({
       }
       function processAfterError (error) {
         if (_isFunction(params.afterError)) {
-          params.afterError({ getState, error })
+          params.afterError({ getState })
         }
       }
       function dispatchSuccessType (resBody) {
