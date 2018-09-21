@@ -104,7 +104,6 @@ apiMiddleware({
   generateDefaultParams: ({ getState })=> {
     return {
       headers: { 'X-Requested-From': 'my-killer-app' },
-
     }
   },
   maxReplayTimes: 5
@@ -212,7 +211,20 @@ Http verb to use, can be `get`, `post`, `put` or `del`
 Request path to be concated with `baseUrl`
 
 ### url:
-Full url of request, will take precedence over `path`
+Full url of request, will take precedence over `path` and will ignore `baseUrl`
+
+### camelizeResponse(optional):
+Camelize response keys of the request. default to `true`
+
+Transform `{ user_name: 'name' }` to `{ userName: 'name' }`
+
+### decamelizeRequest(optional):
+Decamelize request payload keys. default to `true`
+
+Transform `{ userName: 'name' }` to `{ user_name: 'name' }`
+
+### withCredentials(optional):
+Enable Access-Control requests or not. default to `true`
 
 ### sendingType(optional):
 Action type to be dispatched immediately after sending the request
