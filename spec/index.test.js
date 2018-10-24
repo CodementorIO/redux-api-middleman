@@ -387,7 +387,8 @@ describe('Middleware::Api', () => {
           error: expect.objectContaining({
             response: {
               body: errorPayload
-            }
+            },
+            data: errorPayload
           })
         })
       })
