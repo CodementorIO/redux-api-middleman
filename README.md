@@ -192,7 +192,7 @@ export function getInfo({ username }) {
       afterSuccess: ({ getState, dispatch, response }) => {
         //...
       },
-      afterError: ({ getState })=> {
+      afterError: ({ getState, error })=> {
         //...
       }
     }
@@ -242,7 +242,7 @@ This is a good place to handle request-related side effects such as route pushin
 
 ### afterError(optional):
 A callback function to be invoked after dispatching the action with type `errorType`.
-`({ getState })` would be passed into this callback function.
+`({ getState, error })` would be passed into this callback function.
 
 
 ## Sending Chaining Requests:
