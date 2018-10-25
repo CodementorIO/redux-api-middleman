@@ -107,7 +107,7 @@ export default function ({
 
       function handleError (err) {
         dispatchErrorType(err)
-        processAfterError()
+        processAfterError(err)
         reject(err)
       }
 
@@ -119,9 +119,9 @@ export default function ({
           }))
         }
       }
-      function processAfterError () {
+      function processAfterError (error) {
         if (_isFunction(params.afterError)) {
-          params.afterError({ getState })
+          params.afterError({ getState, error })
         }
       }
       function dispatchSuccessType (resBody) {

@@ -383,7 +383,13 @@ describe('Middleware::Api', () => {
       it('trigger afterError of path2', async () => {
         await apiMiddleware({ dispatch, getState })(next)(action)
         expect(afterError2).toBeCalledWith({
-          getState
+          getState,
+          error: expect.objectContaining({
+            response: {
+              body: errorPayload
+            },
+            data: errorPayload
+          })
         })
       })
 
