@@ -1,7 +1,6 @@
 import axios from 'axios'
 import Promise from 'yaku/lib/yaku.core'
-import _isFunction from 'lodash/isFunction'
-import omit from 'lodash/omit'
+import omit from 'object.omit'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
 import { CALL_API } from './'
@@ -11,6 +10,10 @@ import {
   generateBody
 } from './utils'
 import log from './log'
+
+function isFunction (v) {
+  return typeof v === 'function'
+}
 
 export default function ({
   timeout,
@@ -120,7 +123,7 @@ export default function ({
         }
       }
       function processAfterError (error) {
-        if (_isFunction(params.afterError)) {
+        if (isFunction(params.afterError)) {
           params.afterError({ getState, error })
         }
       }
@@ -131,7 +134,7 @@ export default function ({
         }))
       }
       function processAfterSuccess (response) {
-        if (_isFunction(params.afterSuccess)) {
+        if (isFunction(params.afterSuccess)) {
           params.afterSuccess({ getState, dispatch, response })
         }
       }

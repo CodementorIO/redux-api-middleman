@@ -6,9 +6,9 @@
 
 A Redux middleware extracting the asynchronous behavior of sending API requests.
 
-# Usage:
+# Usage
 
-## Get Started:
+## Get Started
 
 - Create the middleware and put into your middleware chain:
 
@@ -79,7 +79,7 @@ when success, it would dispatch an action:
 }
 ```
 
-# Features:
+# Features
 
 - Async to Sync: Abstract the async nature of sending API to make it easier to implement/test
 - Universal Rendering Friendly
@@ -88,9 +88,9 @@ when success, it would dispatch an action:
 - Replay request optionally when failed
 - Tweek request/response format when needed
 
-# API Documentation:
+# API Documentation
 
-## Creation:
+## Creation
 
 A middleware can be created like this:
 
@@ -111,11 +111,11 @@ apiMiddleware({
 })
 ```
 
-### Options:
+### Options
 
 #### `baseUrl`: The base url of api calls(required)
 
-#### `errorInterceptor`(optional):
+#### `errorInterceptor`(optional)
 
 When provided, this function would be invoked whenever an API call fails.
 The function signature looks like this:
@@ -153,7 +153,7 @@ For example, to refresh access token when server responds 401:
 The code above would do the token refreshing whenever err is 401,
 and proceed the original error otherwise.
 
-#### `generateDefaultParams`(optional):
+#### `generateDefaultParams`(optional)
 
 A function which takes `({ getState })` and returns an object like this:
 
@@ -169,7 +169,7 @@ On each request, the object returned by this function would be merged into the r
 
 ----
 
-## Usage In Action Creators:
+## Usage In Action Creators
 
 In Action Creators, we can use the following code to send a single request:
 
@@ -203,50 +203,50 @@ export function getInfo({ username }) {
 
 In short, just return an action object with `CALL_API`.
 
-### Options:
+### Options
 
-### method(required):
+### method(required)
 Http verb to use, can be `get`, `post`, `put` or `del`
 
-### path(optional):
+### path(optional)
 Request path to be concated with `baseUrl`
 
-### url:
+### url
 Full url of request, will take precedence over `path` and will ignore `baseUrl`
 
-### camelizeResponse(optional):
+### camelizeResponse(optional)
 Camelize response keys of the request. default to `true`
 
 Transform `{ user_name: 'name' }` to `{ userName: 'name' }`
 
-### decamelizeRequest(optional):
+### decamelizeRequest(optional)
 Decamelize request payload keys. default to `true`
 
 Transform `{ userName: 'name' }` to `{ user_name: 'name' }`
 
-### withCredentials(optional):
+### withCredentials(optional)
 Enable Access-Control requests or not. default to `true`
 
-### sendingType(optional):
+### sendingType(optional)
 Action type to be dispatched immediately after sending the request
 
-### successType(required):
+### successType(required)
 Action type to be dispatched after the API call success
 
-### errorType(optional):
+### errorType(optional)
 Action type to be dispatched  after the API call fails
 
-### afterSuccess(optional):
+### afterSuccess(optional)
 A callback function to be invoked after dispatching the action with type `successType`.
 `({ getState, dispatch, response })` would be passed into this callback function.
 This is a good place to handle request-related side effects such as route pushing.
 
-### afterError(optional):
+### afterError(optional)
 A callback function to be invoked after dispatching the action with type `errorType`.
 `({ getState, error })` would be passed into this callback function.
 
 
-## Sending Chaining Requests:
+## Sending Chaining Requests
 
 To send chaining requests, just return an action with `CHAIN_API`-keyed object like this:
 
@@ -288,11 +288,11 @@ After the first request is finished, we then send the second request with the `b
 
 ---
 
-## Usage In Reducers:
+## Usage In Reducers
 
 During the life cycle of an API call, several types of actions would be dispatched:
 
-### `sendingType` action:
+### `sendingType` action
 
 After the request has been sent, an action of type `sendingType` would be dispatched immediately.
 The action would contain the key-val pairs other than `CALL_API` in the action object.
@@ -319,7 +319,7 @@ then the `sendingType` action would be:
 }
 ```
 
-### `successType` action:
+### `successType` action
 
 After the server responds successfully, an action of type `successType` would be dispatched.
 The action would contain:
@@ -348,7 +348,7 @@ then the `successType` action would be:
 }
 ```
 
-### `errorType` action:
+### `errorType` action
 
 After the server responds fails, an action of type `errorType` would be dispatched.
 The action would contain:

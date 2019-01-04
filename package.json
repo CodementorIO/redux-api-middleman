@@ -57,7 +57,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "humps": "^1.1.0",
-    "lodash": "^4.13.1",
+    "object.omit": "^3.0.0",
     "qs": "^6.5.2",
     "yaku": "^0.18.6"
   },

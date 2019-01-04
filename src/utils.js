@@ -1,16 +1,14 @@
 import qs from 'qs'
-import _merge from 'lodash/merge'
-import _cloneDeep from 'lodash/cloneDeep'
 import { CALL_API } from './'
 
 export const log = console
 
 export function actionWith (action, toMerge) {
-  let ac = _cloneDeep(action)
-  if (ac[CALL_API]) {
-    delete ac[CALL_API]
+  const { [CALL_API]: api, ...extra } = action
+  return {
+    ...extra,
+    ...toMerge
   }
-  return _merge(ac, toMerge)
 }
 
 export function addResponseKeyAsSuperAgent (res) {
