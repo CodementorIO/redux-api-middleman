@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/CodementorIO/redux-api-middleman.svg?branch=master)](https://travis-ci.org/CodementorIO/redux-api-middleman)
-[![npm version](https://badge.fury.io/js/redux-api-middleman.svg)](https://badge.fury.io/js/redux-api-middleman)
+[![npm version](https://badge.fury.io/js/redux-api-middleman.svg)](https://www.npmjs.com/package/redux-api-middleman)
+[![minzip bundle size](https://img.shields.io/bundlephobia/minzip/redux-api-middleman.svg)](https://www.npmjs.com/package/redux-api-middleman)
 
 # Redux API Middleman
 
