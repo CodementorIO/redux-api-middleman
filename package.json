@@ -23,12 +23,12 @@
     "lint": "standard --fix --verbose | snazzy",
     "size": "size-limit",
     "size:why": "size-limit --why",
+    "prebuild": "yarn clear",
     "build": "babel src --out-dir lib",
     "clear": "rm -rf lib/*",
-    "release:patch": "yarn run build && release patch",
-    "release:minor": "yarn run build && release minor",
-    "release:major": "yarn run build && release major",
-    "prepublish": "yarn run test:ci && yarn run clear && yarn run build"
+    "release:patch": "yarn build && release patch && npm publish",
+    "release:minor": "yarn build && release minor && npm publish",
+    "release:major": "yarn build && release major && npm publish"
   },
   "standard": {
     "env": [
