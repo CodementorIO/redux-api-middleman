@@ -74,24 +74,23 @@ export default function ({
             let serverError = !!error.response || !!error.request
 
             if (!serverError) {
-              handleOperationError(error)
-            } else {
-              let err = prepareErrorPayload(error)
-
-              if (replayTimes === maxReplayTimes) {
-                handleError(
-                  new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
-                )
-              } else {
-                replayTimes += 1
-                errorInterceptor({
-                  proceedError: () => handleError(err),
-                  err,
-                  getState,
-                  replay: sendRequest
-                })
-              }
+              return handleOperationError(error)
             }
+
+            if (replayTimes === maxReplayTimes) {
+              return handleError(
+                new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
+              )
+            }
+            
+            const err = prepareErrorPayload({ error, camelize: params.camelizeResponse })
+            replayTimes += 1
+            errorInterceptor({
+              proceedError: () => handleError(err),
+              err,
+              getState,
+              replay: sendRequest
+            })
           })
       }
 
@@ -102,9 +101,15 @@ export default function ({
         reject(error)
       }
 
-      function prepareErrorPayload (error) {
-        let res = error.response || {}
-        let backwardCompatibleError = addResponseKeyAsSuperAgent(res)
+      function prepareErrorPayload ({ error, camelize }) {
+        let res
+        if (error.response) {
+          res = camelize ? camelizeKeys(error.response) : error.response
+        } else {
+          res = {}
+        }
+        
+        const backwardCompatibleError = addResponseKeyAsSuperAgent({ res, camelize })
         return backwardCompatibleError
       }
 

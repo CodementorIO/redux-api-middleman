@@ -1,5 +1,6 @@
 import qs from 'qs'
 import { CALL_API } from './'
+import { camelizeKeys } from 'humps'
 
 export const log = console
 
@@ -11,10 +12,10 @@ export function actionWith (action, toMerge) {
   }
 }
 
-export function addResponseKeyAsSuperAgent (res) {
+export function addResponseKeyAsSuperAgent ({ res, camelize }) {
   return Object.assign({}, res, {
     response: {
-      body: res.data
+      body: camelize ? camelizeKeys(res.data) : res.data
     }
   })
 }
