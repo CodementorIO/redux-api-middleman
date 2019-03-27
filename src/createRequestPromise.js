@@ -98,12 +98,7 @@ export default function ({
       }
 
       function prepareErrorPayload ({ error, camelize }) {
-        let res
-        if (error.response) {
-          res = error.response
-        } else {
-          res = {}
-        }
+        let res = error.response || {}
         if (camelize) {
           res.data = camelizeKeys(res.data)
         }

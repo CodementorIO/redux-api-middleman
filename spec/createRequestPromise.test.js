@@ -6,7 +6,7 @@ import axios from 'axios'
 jest.mock('axios')
 
 const getMockAxiosPromise = ({ error } = {}) => {
-  new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const res = {
       data: {
         key_1: 'val_1'
@@ -32,7 +32,7 @@ describe('createRequestPromise', () => {
   let dispatch
   let errorInterceptor
   let extractParams
-  let maxReplayTimes
+  let maxReplayTimes = 1
   let mockApiAction, mockParams, mockDefaultParams
   let mockPrevBody
   beforeEach(() => {
@@ -148,39 +148,5 @@ describe('createRequestPromise', () => {
     })(mockPrevBody)
     const firstArgument = getLastCall(axios)[0]
     expect(firstArgument.data).toEqual(body)
-  })
-
-  describe('when error occurs', () => {
-    beforeEach(() => {
-      axios.mockReturnValue(getMockAxiosPromise({ error: true }))
-    })
-    describe('errorInterceptor behavior', () => {
-      it('should be called with proceedError, err and getState', () => {
-        createRequestPromise({
-          timeout,
-          generateDefaultParams,
-          createCallApiAction,
-          getState,
-          dispatch,
-          errorInterceptor,
-          extractParams,
-          maxReplayTimes
-        })(mockPrevBody)
-      })
-      expect(errorInterceptor).toHaveBeenCalledTimes(1)
-      expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
-        err: {
-          response: {
-            body: {
-              key_1: 'val_1'
-            }
-          }
-        },
-        getState
-      })
-    })
-    it('should return camelized payload if camelizeResponse is true', () => {
-
-    })
   })
 })
