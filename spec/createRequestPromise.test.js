@@ -56,7 +56,6 @@ describe('createRequestPromise', () => {
     dispatch = jest.fn()
     getState = jest.fn()
     mockPrevBody = {}
-    console.log()
   })
   it('should return a Promise', () => {
     const promise = createRequestPromise({

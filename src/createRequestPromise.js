@@ -4,11 +4,7 @@ import omit from 'object.omit'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
 import { CALL_API } from './'
-import {
-  actionWith,
-  addResponseKeyAsSuperAgent,
-  generateBody
-} from './utils'
+import { actionWith, generateBody } from './utils'
 import log from './log'
 
 function isFunction (v) {
@@ -104,13 +100,14 @@ export default function ({
       function prepareErrorPayload ({ error, camelize }) {
         let res
         if (error.response) {
-          res = camelize ? camelizeKeys(error.response) : error.response
+          res = error.response
         } else {
           res = {}
         }
-        
-        const backwardCompatibleError = addResponseKeyAsSuperAgent({ res, camelize })
-        return backwardCompatibleError
+        if (camelize) {
+          res.data = camelizeKeys(res.data)
+        }
+        return res
       }
 
       function handleError (err) {

@@ -385,10 +385,7 @@ describe('Middleware::Api', () => {
         expect(afterError2).toBeCalledWith({
           getState,
           error: expect.objectContaining({
-            response: {
-              body: errorPayload
-            },
-            data: errorPayload
+            data: camelizeKeys(errorPayload)
           })
         })
       })
@@ -410,8 +407,7 @@ describe('Middleware::Api', () => {
         }
         await apiMiddleware({ dispatch, getState })(next)(action)
         expect(dispatchedAction.type).toEqual(errorType2)
-        expect(dispatchedAction.error.data).toEqual(errorPayload)
-        expect(dispatchedAction.error.response.body).toEqual(errorPayload)
+        expect(dispatchedAction.error.data).toEqual(camelizeKeys(errorPayload))
       })
 
       describe('errorInterceptor behaviors', () => {
