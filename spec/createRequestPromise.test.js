@@ -8,13 +8,13 @@ jest.mock('axios')
 const getMockAxiosPromise = ({ error } = {}) => {
   return new Promise((resolve, reject) => {
     if (error) {
-      process.nextTick(() => reject({
+      process.nextTick(() => reject(new Error({
         response: {
           data: {
             key_1: 'val_1'
           },
         }
-      }))
+      })))
     } else {
       process.nextTick(() => resolve({
         data: {
@@ -160,22 +160,21 @@ describe('createRequestPromise', () => {
     beforeEach(() => {
       axios.mockReturnValue(getMockAxiosPromise({ error: true }))
     })
-    it('should call errorInterceptor', async () => {
+    it('should call errorInterceptor', () => {
       const errorInterceptor = jest.fn(({ proceedError }) => {
         proceedError()
       })
-      try {
-        await createRequestPromise({
-          timeout,
-          generateDefaultParams,
-          createCallApiAction,
-          getState,
-          dispatch,
-          errorInterceptor,
-          extractParams,
-          maxReplayTimes
-        })(mockPrevBody)
-      } catch (err) {
+      createRequestPromise({
+        timeout,
+        generateDefaultParams,
+        createCallApiAction,
+        getState,
+        dispatch,
+        errorInterceptor,
+        extractParams,
+        maxReplayTimes
+      })(mockPrevBody)
+      .catch(() => {
         expect(errorInterceptor).toHaveBeenCalledTimes(1)
         expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
           err: {
@@ -185,7 +184,7 @@ describe('createRequestPromise', () => {
           },
           getState
         })
-      }
+      })
     })
   })
 })
