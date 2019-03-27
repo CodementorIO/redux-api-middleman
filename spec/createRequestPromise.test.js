@@ -7,15 +7,20 @@ jest.mock('axios')
 
 const getMockAxiosPromise = ({ error } = {}) => {
   return new Promise((resolve, reject) => {
-    const res = {
-      data: {
-        key_1: 'val_1'
-      }
-    }
     if (error) {
-      process.nextTick(() => reject(res))
+      process.nextTick(() => reject({
+        response: {
+          data: {
+            key_1: 'val_1'
+          },
+        }
+      }))
     } else {
-      process.nextTick(() => resolve(res))
+      process.nextTick(() => resolve({
+        data: {
+          key_1: 'val_1'
+        }
+      }))
     }
   })
 }
@@ -32,7 +37,7 @@ describe('createRequestPromise', () => {
   let dispatch
   let errorInterceptor
   let extractParams
-  let maxReplayTimes = 1
+  let maxReplayTimes
   let mockApiAction, mockParams, mockDefaultParams
   let mockPrevBody
   beforeEach(() => {
@@ -42,7 +47,8 @@ describe('createRequestPromise', () => {
     }
     mockParams = {
       method: 'get',
-      sendingType: 'sendingType'
+      sendingType: 'sendingType',
+      camelizeResponse: true
     }
     mockDefaultParams = {
       headers: {},
@@ -148,5 +154,38 @@ describe('createRequestPromise', () => {
     })(mockPrevBody)
     const firstArgument = getLastCall(axios)[0]
     expect(firstArgument.data).toEqual(body)
+  })
+
+  describe('when axios catches error', () => {
+    beforeEach(() => {
+      axios.mockReturnValue(getMockAxiosPromise({ error: true }))
+    })
+    it('should call errorInterceptor', async () => {
+      const errorInterceptor = jest.fn(({ proceedError }) => {
+        proceedError()
+      })
+      try {
+        await createRequestPromise({
+          timeout,
+          generateDefaultParams,
+          createCallApiAction,
+          getState,
+          dispatch,
+          errorInterceptor,
+          extractParams,
+          maxReplayTimes
+        })(mockPrevBody)
+      } catch (err) {
+        expect(errorInterceptor).toHaveBeenCalledTimes(1)
+        expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
+          err: {
+            data: {
+              key1: 'val_1'
+            }            
+          },
+          getState
+        })
+      }
+    })
   })
 })
