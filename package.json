@@ -1,6 +1,6 @@
 {
   "name": "redux-api-middleman",
-  "version": "2.0.2",
+  "version": "3.0.0-canary.0",
   "description": "A Redux middleware making sending request a breeze",
   "main": "lib/index.js",
   "jest": {
@@ -26,6 +26,7 @@
     "prebuild": "yarn clear",
     "build": "babel src --out-dir lib",
     "clear": "rm -rf lib/*",
+    "release:pre": "yarn build && release pre && npm publish",
     "release:patch": "yarn build && release patch && npm publish",
     "release:minor": "yarn build && release minor && npm publish",
     "release:major": "yarn build && release major && npm publish"

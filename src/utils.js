@@ -11,14 +11,6 @@ export function actionWith (action, toMerge) {
   }
 }
 
-export function addResponseKeyAsSuperAgent (res) {
-  return Object.assign({}, res, {
-    response: {
-      body: res.data
-    }
-  })
-}
-
 function _isUrlencodedContentType (headersObject) {
   let contentTypeKey = Object.keys(headersObject).find(
     key => key.toLowerCase() === 'content-type'
