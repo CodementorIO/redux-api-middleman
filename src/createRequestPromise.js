@@ -121,7 +121,7 @@ export default function ({
       }
       function processAfterError (error) {
         if (isFunction(params.afterError)) {
-          params.afterError({ getState, error })
+          params.afterError({ getState, dispatch, error })
         }
       }
       function dispatchSuccessType (resBody) {

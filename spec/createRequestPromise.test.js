@@ -174,17 +174,18 @@ describe('createRequestPromise', () => {
         extractParams,
         maxReplayTimes
       })(mockPrevBody)
-      .catch(() => {
-        expect(errorInterceptor).toHaveBeenCalledTimes(1)
-        expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
-          err: {
-            data: {
-              key1: 'val_1'
-            }            
-          },
-          getState
+        .catch(() => {
+          expect(errorInterceptor).toHaveBeenCalledTimes(1)
+          expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
+            err: {
+              data: {
+                key1: 'val_1'
+              }
+            },
+            dispatch,
+            getState
+          })
         })
-      })
     })
   })
 })
