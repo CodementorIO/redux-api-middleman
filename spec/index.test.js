@@ -384,6 +384,7 @@ describe('Middleware::Api', () => {
         await apiMiddleware({ dispatch, getState })(next)(action)
         expect(afterError2).toBeCalledWith({
           getState,
+          dispatch,
           error: expect.objectContaining({
             data: camelizeKeys(errorPayload)
           })
