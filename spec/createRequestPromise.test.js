@@ -4,6 +4,7 @@ import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'
 
 jest.mock('axios')
+jest.mock('../src/log')
 
 const getMockAxiosPromise = ({ error } = {}) => {
   return new Promise((resolve, reject) => {
@@ -12,7 +13,7 @@ const getMockAxiosPromise = ({ error } = {}) => {
         response: {
           data: {
             key_1: 'val_1'
-          },
+          }
         }
       })))
     } else {

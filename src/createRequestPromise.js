@@ -78,7 +78,7 @@ export default function ({
                 new Error(`reached MAX_REPLAY_TIMES = ${maxReplayTimes}`)
               )
             }
-            
+
             const err = prepareErrorPayload({ error, camelize: params.camelizeResponse })
             replayTimes += 1
             errorInterceptor({
