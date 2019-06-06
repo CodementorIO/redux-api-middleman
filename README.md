@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/CodementorIO/redux-api-middleman.svg?branch=master)](https://travis-ci.org/CodementorIO/redux-api-middleman)
 [![npm version](https://badge.fury.io/js/redux-api-middleman.svg)](https://www.npmjs.com/package/redux-api-middleman)
-[![minzip bundle size](https://img.shields.io/bundlephobia/minzip/redux-api-middleman.svg)](https://www.npmjs.com/package/redux-api-middleman)
+[![minzip bundle size](https://img.shields.io/bundlephobia/minzip/redux-api-middleman.svg)](https://www.npmjs.com/package/redux-api-middleman) [![Greenkeeper badge](https://badges.greenkeeper.io/CodementorIO/redux-api-middleman.svg)](https://greenkeeper.io/)
 
 # Redux API Middleman
 
