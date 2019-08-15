@@ -4,3 +4,4 @@ spec
 *.swp
 *.swo
 yarn.lock
+.DS_Store
