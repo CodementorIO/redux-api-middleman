@@ -1,4 +1,4 @@
-import Promise from 'yaku/lib/yaku.core'
+import Promise from 'es6-promise'
 import { CALL_API } from '../src'
 import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'
