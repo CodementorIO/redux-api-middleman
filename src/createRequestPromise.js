@@ -22,8 +22,8 @@ export default function ({
   maxReplayTimes
 }) {
   return (prevBody) => {
-    let apiAction = createCallApiAction(prevBody)
-    let params = extractParams(apiAction[CALL_API])
+    const apiAction = createCallApiAction(prevBody)
+    const params = extractParams(apiAction[CALL_API])
     let replayTimes = 0
 
     return new Promise((resolve, reject) => {
@@ -32,11 +32,11 @@ export default function ({
           dispatch(actionWith(apiAction, { type: params.sendingType }))
         }
 
-        let defaultParams = getExtendedParams()
+        const defaultParams = getExtendedParams()
 
         let queryObject = Object.assign({}, defaultParams.query, params.query)
         let sendObject = Object.assign({}, defaultParams.body, params.body)
-        let headersObject = Object.assign({},
+        const headersObject = Object.assign({},
           defaultParams.headers,
           params.headers,
           interceptorParams.headers
@@ -47,9 +47,9 @@ export default function ({
           sendObject = decamelizeKeys(sendObject)
         }
 
-        let omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
+        const omitKeys = params.method.toLowerCase() === 'get' ? ['data'] : []
 
-        let config = omit({
+        const config = omit({
           headers: headersObject,
           method: params.method,
           url: params.url,
@@ -61,13 +61,13 @@ export default function ({
 
         axios(config)
           .then((res) => {
-            let resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
+            const resBody = params.camelizeResponse ? camelizeKeys(res.data) : res.data
             dispatchSuccessType(resBody)
             processAfterSuccess(resBody)
             resolve(resBody)
           }).catch((error) => {
           // https://github.com/axios/axios#handling-errors
-            let serverError = !!error.response || !!error.request
+            const serverError = !!error.response || !!error.request
 
             if (!serverError) {
               return handleOperationError(error)
@@ -98,7 +98,7 @@ export default function ({
       }
 
       function prepareErrorPayload ({ error, camelize }) {
-        let res = error.response || {}
+        const res = error.response || {}
         if (camelize) {
           res.data = camelizeKeys(res.data)
         }

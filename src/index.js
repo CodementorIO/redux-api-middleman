@@ -7,10 +7,10 @@ export const CHAIN_API = Symbol('CHAIN_API')
 export const DEFAULT_MAX_REPLAY_TIMES = 2
 export const DEFAULT_TIMEOUT = 20000 // ms
 
-let defaultInterceptor = function ({ proceedError, err, replay, getState }) {
+const defaultInterceptor = function ({ proceedError, err, replay, getState }) {
   proceedError()
 }
-let noopDefaultParams = () => {
+const noopDefaultParams = () => {
   return {}
 }
 
@@ -21,7 +21,7 @@ export default ({
   generateDefaultParams = noopDefaultParams,
   maxReplayTimes = DEFAULT_MAX_REPLAY_TIMES
 }) => {
-  let extractParams = paramsExtractor({ baseUrl })
+  const extractParams = paramsExtractor({ baseUrl })
 
   return ({ dispatch, getState }) => next => action => {
     if (action[CALL_API]) {
@@ -37,7 +37,7 @@ export default ({
     }
 
     return new Promise((resolve, reject) => {
-      let promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
+      const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
         return createRequestPromise({
           timeout,
           generateDefaultParams,
@@ -50,7 +50,7 @@ export default ({
         })
       })
 
-      let overall = promiseCreators.reduce((promise, createReqPromise) => {
+      const overall = promiseCreators.reduce((promise, createReqPromise) => {
         return promise.then(createReqPromise)
       }, Promise.resolve())
 

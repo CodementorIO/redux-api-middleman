@@ -26,19 +26,19 @@ describe('Middleware::Api', () => {
   })
 
   describe('when called with [CHAIN_API]', () => {
-    let successType1 = 'ON_SUCCESS_1'
-    let successType2 = 'ON_SUCCESS_2'
-    let sendingType1 = 'ON_SENDING_1'
-    let sendingType2 = 'ON_SENDING_2'
-    let errorType2 = 'ON_ERROR_2'
+    const successType1 = 'ON_SUCCESS_1'
+    const successType2 = 'ON_SUCCESS_2'
+    const sendingType1 = 'ON_SENDING_1'
+    const sendingType2 = 'ON_SENDING_2'
+    const errorType2 = 'ON_ERROR_2'
 
     let nockScope1, nockScope2
 
     let afterSuccess1, afterSuccess2
-    let response1 = { id: 'the-id-1', to_be_camelized: 'snake-val' }
-    let response2 = { id: 'the-res-2' }
-    let path1 = '/the-url/path-1'
-    let path2 = `/the-url/${response1.id}`
+    const response1 = { id: 'the-id-1', to_be_camelized: 'snake-val' }
+    const response2 = { id: 'the-res-2' }
+    const path1 = '/the-url/path-1'
+    const path2 = `/the-url/${response1.id}`
 
     let afterError1
     let afterError2
@@ -98,8 +98,8 @@ describe('Middleware::Api', () => {
     })
 
     describe('when sending GET request', () => {
-      let host = 'http://get-request-host.com'
-      let path = '/the-path'
+      const host = 'http://get-request-host.com'
+      const path = '/the-path'
       let nockScope
       beforeEach(() => {
         action = {
@@ -124,8 +124,8 @@ describe('Middleware::Api', () => {
     })
 
     describe('when `url` is given in CALL_API', () => {
-      let host = 'http://another-host.com'
-      let path = '/the-path'
+      const host = 'http://another-host.com'
+      const path = '/the-path'
       let nockScope
 
       beforeEach(() => {
@@ -150,7 +150,7 @@ describe('Middleware::Api', () => {
     })
 
     describe('when `camelizeResponse` is false', () => {
-      let path = '/the-path'
+      const path = '/the-path'
       let nockScope
 
       beforeEach(() => {
@@ -180,7 +180,7 @@ describe('Middleware::Api', () => {
     })
 
     describe('when `decamelizeRequest` is false', () => {
-      let path = '/the-path'
+      const path = '/the-path'
 
       beforeEach(() => {
         action = {
@@ -209,7 +209,7 @@ describe('Middleware::Api', () => {
     })
 
     describe('when generateDefaultParams is provided', () => {
-      let path = '/the-path'
+      const path = '/the-path'
       let nockScope
       let generateDefaultParams
       beforeEach(() => {
@@ -312,10 +312,10 @@ describe('Middleware::Api', () => {
     })
 
     describe('when one of the apis timeout', () => {
-      let timeout = 50
-      let host = 'http://another-host.com'
-      let path = '/the-path'
-      let timeoutErrorType = 'TIMEOUT_ERROR'
+      const timeout = 50
+      const host = 'http://another-host.com'
+      const path = '/the-path'
+      const timeoutErrorType = 'TIMEOUT_ERROR'
       let nockScope
       let dispatchedAction
 
@@ -413,7 +413,7 @@ describe('Middleware::Api', () => {
 
       describe('errorInterceptor behaviors', () => {
         it('handles dispatch and rejection stuff via `proceedError`', async () => {
-          let spy = jest.fn()
+          const spy = jest.fn()
           let dispatchedAction
           dispatch = (a) => {
             dispatchedAction = a
@@ -458,7 +458,7 @@ describe('Middleware::Api', () => {
           })
           it('replay no more than `maxReplayTimes`', async () => {
             let replayTimes = 0
-            let maxReplayTimes = 6
+            const maxReplayTimes = 6
             let dispatchedAction
             repeat(6, () => nockRequest2(400))
             dispatch = (a) => {
@@ -487,10 +487,10 @@ describe('Middleware::Api', () => {
 
   describe('when action is without CALL_API and CHAIN_API', () => {
     it('passes the action to next middleware', async () => {
-      let nextRetResult = {}
+      const nextRetResult = {}
       next.mockReturnValue(nextRetResult)
       action = { type: 'not-CALL_API' }
-      let result = await apiMiddleware({ dispatch, getState })(next)(action)
+      const result = await apiMiddleware({ dispatch, getState })(next)(action)
 
       expect(next).toBeCalledWith(action)
       expect(result).toEqual(nextRetResult)
@@ -498,8 +498,8 @@ describe('Middleware::Api', () => {
   })
 
   describe('when action is with `CALL_API`', () => {
-    let successType = 'ON_SUCCESS'
-    let path = '/the-url/path'
+    const successType = 'ON_SUCCESS'
+    const path = '/the-url/path'
     let dispatchedAction
 
     beforeEach(() => {

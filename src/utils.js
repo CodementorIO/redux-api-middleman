@@ -12,7 +12,7 @@ export function actionWith (action, toMerge) {
 }
 
 function _isUrlencodedContentType (headersObject) {
-  let contentTypeKey = Object.keys(headersObject).find(
+  const contentTypeKey = Object.keys(headersObject).find(
     key => key.toLowerCase() === 'content-type'
   )
   if (!contentTypeKey) {
