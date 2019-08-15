@@ -1,4 +1,4 @@
-import Promise from 'yaku/lib/yaku.core'
+import Promise from 'es6-promise'
 import createRequestPromise from './createRequestPromise'
 import { paramsExtractor } from './utils'
 

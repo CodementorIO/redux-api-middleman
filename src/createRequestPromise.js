@@ -1,5 +1,5 @@
 import axios from 'axios'
-import Promise from 'yaku/lib/yaku.core'
+import Promise from 'es6-promise'
 import omit from 'object.omit'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
