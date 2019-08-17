@@ -60,7 +60,7 @@
     "es6-promise": "^4.2.8",
     "humps": "^2.0.1",
     "object.omit": "^3.0.0",
-    "qs": "^6.5.2"
+    "qs": "^6.8.0"
   },
   "licence": "MIT"
 }
