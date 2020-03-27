@@ -51,7 +51,7 @@
     "jest": "^24.8.0",
     "nock": "^10.0.6",
     "release": "^6.0.1",
-    "size-limit": "^2.0.2",
+    "size-limit": "^4.4.2",
     "snazzy": "^8.0.0",
     "standard": "^13.1.0"
   },
