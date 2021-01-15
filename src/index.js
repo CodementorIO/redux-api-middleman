@@ -39,7 +39,7 @@ export default ({
 
     return new Promise((resolve, reject) => {
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
-        const apiAction = createCallApiAction()
+        const apiAction = createCallApiAction()[CALL_API]
         if (apiAction.revalidationEnabled) {
           const revalidationKey = _getRevalidationKey(createCallApiAction)
           const lastExecutedTime = executionTimeMap[revalidationKey]
