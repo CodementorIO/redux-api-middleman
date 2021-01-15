@@ -1,6 +1,6 @@
 {
   "name": "redux-api-middleman",
-  "version": "3.1.1",
+  "version": "3.1.1-canary.12",
   "description": "A Redux middleware making sending request a breeze",
   "main": "lib/index.js",
   "jest": {
@@ -59,6 +59,7 @@
     "axios": "^0.19.0",
     "es6-promise": "^4.2.8",
     "humps": "^2.0.1",
+    "mockdate": "^3.0.2",
     "object.omit": "^3.0.0",
     "qs": "^6.5.2"
   },
