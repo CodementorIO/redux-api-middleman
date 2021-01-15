@@ -44,11 +44,11 @@ export default ({
           const revalidationKey = _getRevalidationKey(apiAction)
           const lastExecutedTime = lastExecutionTimeMap[revalidationKey]
           const hasKey = !!lastExecutedTime
-          if (!hasKey) {
+          if (hasKey && action.revalidate === undefined) {
             return () => Promise.resolve()
           }
           const now = Math.floor(new Date().getTime() / 1000)
-          const shouldNotRevalidate = action.revalidate && (now - lastExecutedTime) > action.revalidate
+          const shouldNotRevalidate = (now - lastExecutedTime) < action.revalidate
           if (!shouldNotRevalidate) {
             return () => Promise.resolve()
           }
