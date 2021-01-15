@@ -13,7 +13,7 @@ const defaultInterceptor = function ({ proceedError, err, replay, getState }) {
 const noopDefaultParams = () => {
   return {}
 }
-const executionTimeMap = {}
+const lastExecutionTimeMap = {}
 
 export default ({
   baseUrl,
@@ -42,7 +42,7 @@ export default ({
         const apiAction = createCallApiAction()[CALL_API]
         if (apiAction.revalidationEnabled) {
           const revalidationKey = _getRevalidationKey(apiAction)
-          const lastExecutedTime = executionTimeMap[revalidationKey]
+          const lastExecutedTime = lastExecutionTimeMap[revalidationKey]
           const hasKey = !!lastExecutedTime
           if (!hasKey) {
             return () => Promise.resolve()
@@ -52,6 +52,7 @@ export default ({
           if (!shouldNotRevalidate) {
             return () => Promise.resolve()
           }
+          lastExecutionTimeMap[revalidationKey] = now
         }
 
         return createRequestPromise({
