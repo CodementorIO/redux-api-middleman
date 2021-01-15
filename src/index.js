@@ -41,13 +41,13 @@ export default ({
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
         const apiAction = createCallApiAction()[CALL_API]
         if (apiAction.revalidationEnabled) {
-          if (!action.revalidate) {
+          if (!apiAction.revalidate) {
             return () => Promise.resolve()
           }
           const revalidationKey = _getRevalidationKey(apiAction)
           const lastExecutedTime = lastExecutionTimeMap[revalidationKey] || 0
           const now = Math.floor(new Date().getTime() / 1000)
-          const shouldNotRevalidate = (now - lastExecutedTime) < action.revalidate
+          const shouldNotRevalidate = (now - lastExecutedTime) < apiAction.revalidate
           if (shouldNotRevalidate) {
             return () => Promise.resolve()
           }
