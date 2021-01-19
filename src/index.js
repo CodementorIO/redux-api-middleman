@@ -4,6 +4,7 @@ import { paramsExtractor } from './utils'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
+export const REVALIDATE_NEVER = Symbol('REVALIDATE_NEVER')
 export const DEFAULT_MAX_REPLAY_TIMES = 2
 export const DEFAULT_TIMEOUT = 20000 // ms
 
@@ -13,7 +14,7 @@ const defaultInterceptor = function ({ proceedError, err, replay, getState }) {
 const noopDefaultParams = () => {
   return {}
 }
-const lastExecutionTimeMap = {}
+const lastRevalidateTimeMap = {}
 
 export default ({
   baseUrl,
@@ -40,18 +41,18 @@ export default ({
     return new Promise((resolve, reject) => {
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
         const apiAction = createCallApiAction()[CALL_API]
-        if (apiAction.revalidationEnabled) {
-          if (!apiAction.revalidate) {
-            return () => Promise.resolve()
-          }
+        if (!!apiAction.revalidate) {
           const revalidationKey = _getRevalidationKey(apiAction)
-          const lastExecutedTime = lastExecutionTimeMap[revalidationKey] || 0
+          const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
           const now = Math.floor(new Date().getTime() / 1000)
-          const shouldNotRevalidate = (now - lastExecutedTime) < apiAction.revalidate
+          const shouldNotRevalidate =  (
+            (apiAction.revalidate === REVALIDATE_NEVER && !!lastRevalidateTime) ||
+            (now - lastRevalidateTime) < apiAction.revalidate
+          )
           if (shouldNotRevalidate) {
             return () => Promise.resolve()
           }
-          lastExecutionTimeMap[revalidationKey] = now
+          lastRevalidateTimeMap[revalidationKey] = now
         }
 
         return createRequestPromise({
