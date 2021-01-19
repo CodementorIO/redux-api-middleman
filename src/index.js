@@ -4,7 +4,6 @@ import { paramsExtractor } from './utils'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
-export const REVALIDATE_NEVER = Symbol('REVALIDATE_NEVER')
 export const DEFAULT_MAX_REPLAY_TIMES = 2
 export const DEFAULT_TIMEOUT = 20000 // ms
 
@@ -44,13 +43,15 @@ export default ({
         if (!!apiAction.revalidate) {
           const revalidationKey = _getRevalidationKey(apiAction)
           const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
-          const now = Math.floor(new Date().getTime() / 1000)
-          const shouldNotRevalidate =  (
-            (apiAction.revalidate === REVALIDATE_NEVER && !!lastRevalidateTime) ||
-            (now - lastRevalidateTime) < apiAction.revalidate
-          )
-          if (shouldNotRevalidate) {
+          if(apiAction.revalidate === 'never' && !!lastRevalidateTime){
             return () => Promise.resolve()
+          }
+          if (Number.isInteger(apiAction.revalidate)) {
+            const now = Math.floor(new Date().getTime() / 1000)
+            const shouldNotRevalidate = (now - lastRevalidateTime) < apiAction.revalidate
+            if (shouldNotRevalidate) {
+              return () => Promise.resolve()
+            }
           }
           lastRevalidateTimeMap[revalidationKey] = now
         }
