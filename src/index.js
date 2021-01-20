@@ -13,6 +13,7 @@ const defaultInterceptor = function ({ proceedError, err, replay, getState }) {
 const noopDefaultParams = () => {
   return {}
 }
+const lastRevalidateTimeMap = {}
 
 export default ({
   baseUrl,
@@ -38,6 +39,23 @@ export default ({
 
     return new Promise((resolve, reject) => {
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
+        const apiAction = createCallApiAction()[CALL_API]
+        const now = Math.floor(new Date().getTime() / 1000)
+        if (!!apiAction.revalidate) {
+          const revalidationKey = _getRevalidationKey(apiAction)
+          const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
+          if(apiAction.revalidate === 'never' && !!lastRevalidateTime){
+            return () => Promise.resolve()
+          }
+          if (Number.isInteger(apiAction.revalidate)) {
+            const shouldNotRevalidate = (now - lastRevalidateTime) < apiAction.revalidate
+            if (shouldNotRevalidate) {
+              return () => Promise.resolve()
+            }
+          }
+          lastRevalidateTimeMap[revalidationKey] = now
+        }
+
         return createRequestPromise({
           timeout,
           generateDefaultParams,
@@ -57,4 +75,21 @@ export default ({
       overall.finally(resolve).catch(reject)
     })
   }
+}
+
+function _getRevalidationKey(actionObj) {
+  const {
+    method,
+    path,
+    url,
+    params,
+    data,
+  } = actionObj
+  return JSON.stringify({
+    method,
+    path,
+    url,
+    params,
+    data,
+  })
 }
