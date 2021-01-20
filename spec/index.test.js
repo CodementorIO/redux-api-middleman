@@ -1,5 +1,6 @@
 import nock from 'nock'
 import { camelizeKeys, decamelizeKeys } from 'humps'
+import MockDate from 'mockdate'
 
 import log from '../src/log'
 import createApiMiddleware, {
@@ -146,6 +147,78 @@ describe('Middleware::Api', () => {
       it('takes precedence over path', async () => {
         await apiMiddleware({ dispatch, getState })(next)(action)
         nockScope.done()
+      })
+    })
+
+    describe('revalidate behavior', () => {
+      const host = 'http://another-host.com'
+      const currentime = 1579508700000
+      let nockScope, revalidate, path, testSetCount = 0
+
+      beforeEach(() => {
+        testSetCount++
+        path = `/the-path${testSetCount}`
+        MockDate.set(currentime)
+        action = {
+          [CHAIN_API]: [
+            () => {
+              return {
+                [CALL_API]: {
+                  url: `${host}${path}`,
+                  revalidate,
+                  method: 'get',
+                  successType: successType1
+                }
+              }
+            }]
+        }
+        resetNockScope()
+      })
+
+      function resetNockScope() {
+        nock.cleanAll()
+        nockScope = nock(host).get(path).reply(200, response1)
+      }
+
+      it('sends request every calls when revalidate is undefined', async () => {
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
+        resetNockScope()
+        MockDate.set(currentime + (6 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
+      })
+
+      it('sends request only for the first call when revalidate is "never"', async () => {
+        revalidate = 'never'
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
+
+        resetNockScope()
+        MockDate.set(currentime + (6 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(false)
+      })
+
+      it('sends request only after revalidate time when revalidate is defined', async () => {
+        revalidate = 5
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
+
+        resetNockScope()
+        MockDate.set(currentime + (1 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(false)
+
+        resetNockScope()
+        MockDate.set(currentime + (3 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(false)
+
+        resetNockScope()
+        MockDate.set(currentime + (6 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
       })
     })
 
