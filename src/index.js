@@ -40,6 +40,7 @@ export default ({
     return new Promise((resolve, reject) => {
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
         const apiAction = createCallApiAction()[CALL_API]
+        const now = Math.floor(new Date().getTime() / 1000)
         if (!!apiAction.revalidate) {
           const revalidationKey = _getRevalidationKey(apiAction)
           const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
@@ -47,7 +48,6 @@ export default ({
             return () => Promise.resolve()
           }
           if (Number.isInteger(apiAction.revalidate)) {
-            const now = Math.floor(new Date().getTime() / 1000)
             const shouldNotRevalidate = (now - lastRevalidateTime) < apiAction.revalidate
             if (shouldNotRevalidate) {
               return () => Promise.resolve()
