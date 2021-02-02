@@ -207,7 +207,7 @@ describe('Middleware::Api', () => {
         expect(nockScope.isDone()).toBe(false)
       })
 
-      it('sends request only for the first call when revalidate is "never"', async () => {
+      it('always send request on the server side', async () => {
         utils.window = null
         revalidate = 'never'
         await apiMiddleware({ dispatch, getState })(next)(action)
