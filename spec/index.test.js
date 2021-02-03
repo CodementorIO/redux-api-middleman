@@ -8,6 +8,12 @@ import createApiMiddleware, {
   CHAIN_API
 } from '../src'
 
+import * as utils from '../src/utils'
+
+jest.mock('../src/log', () => ({
+  error: jest.fn()
+}))
+
 jest.mock('../src/log', () => ({
   error: jest.fn()
 }))
@@ -24,6 +30,7 @@ describe('Middleware::Api', () => {
     dispatch = jest.fn()
     getState = jest.fn()
     next = jest.fn()
+    utils.window = {}
   })
 
   describe('when called with [CHAIN_API]', () => {
@@ -198,6 +205,18 @@ describe('Middleware::Api', () => {
         MockDate.set(currentime + (6 * 1000))
         await apiMiddleware({ dispatch, getState })(next)(action)
         expect(nockScope.isDone()).toBe(false)
+      })
+
+      it('always send request on the server side', async () => {
+        utils.window = null
+        revalidate = 'never'
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
+
+        resetNockScope()
+        MockDate.set(currentime + (6 * 1000))
+        await apiMiddleware({ dispatch, getState })(next)(action)
+        expect(nockScope.isDone()).toBe(true)
       })
 
       it('sends request only after revalidate time when revalidate is defined', async () => {

@@ -1,6 +1,6 @@
 import Promise from 'es6-promise'
 import createRequestPromise from './createRequestPromise'
-import { paramsExtractor } from './utils'
+import { paramsExtractor, window } from './utils'
 
 export const CALL_API = Symbol('CALL_API')
 export const CHAIN_API = Symbol('CHAIN_API')
@@ -41,7 +41,7 @@ export default ({
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
         const apiAction = createCallApiAction()[CALL_API]
         const now = Math.floor(new Date().getTime() / 1000)
-        if (!!apiAction.revalidate) {
+        if (!!apiAction.revalidate && !!window) {
           const revalidationKey = _getRevalidationKey(apiAction)
           const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
           if(apiAction.revalidate === 'never' && !!lastRevalidateTime){
