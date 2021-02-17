@@ -4,12 +4,13 @@ import omit from 'object.omit'
 import { camelizeKeys, decamelizeKeys } from 'humps'
 
 import { CALL_API } from './'
-import { actionWith, generateBody } from './utils'
+import { actionWith, generateBody, window } from './utils'
 import log from './log'
 
 function isFunction (v) {
   return typeof v === 'function'
 }
+const lastRevalidateTimeMap = {}
 
 export default function ({
   timeout,
@@ -19,12 +20,29 @@ export default function ({
   dispatch,
   errorInterceptor,
   extractParams,
-  maxReplayTimes
+  maxReplayTimes,
+  revalidateDisabled = false
 }) {
   return (prevBody) => {
     const apiAction = createCallApiAction(prevBody)
     const params = extractParams(apiAction[CALL_API])
     let replayTimes = 0
+
+    const now = Math.floor(new Date().getTime() / 1000)
+    if (!!params.revalidate && !!window && !revalidateDisabled) {
+      const revalidationKey = _getRevalidationKey(params)
+      const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
+      if (params.revalidate === 'never' && !!lastRevalidateTime) {
+        return () => Promise.resolve()
+      }
+      if (Number.isInteger(params.revalidate)) {
+        const shouldNotRevalidate = (now - lastRevalidateTime) < params.revalidate
+        if (shouldNotRevalidate) {
+          return () => Promise.resolve()
+        }
+      }
+      lastRevalidateTimeMap[revalidationKey] = now
+    }
 
     return new Promise((resolve, reject) => {
       function sendRequest (interceptorParams = {}) {
@@ -144,4 +162,21 @@ export default function ({
       }
     })
   }
+}
+
+function _getRevalidationKey(actionObj) {
+  const {
+    method,
+    path,
+    url,
+    params,
+    data,
+  } = actionObj
+  return JSON.stringify({
+    method,
+    path,
+    url,
+    params,
+    data,
+  })
 }
