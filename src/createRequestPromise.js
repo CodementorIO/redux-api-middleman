@@ -20,7 +20,8 @@ export default function ({
   dispatch,
   errorInterceptor,
   extractParams,
-  maxReplayTimes
+  maxReplayTimes,
+  revalidateDisabled = false
 }) {
   return (prevBody) => {
     const apiAction = createCallApiAction(prevBody)
@@ -28,7 +29,7 @@ export default function ({
     let replayTimes = 0
 
     const now = Math.floor(new Date().getTime() / 1000)
-    if (!!params.revalidate && !!window) {
+    if (!!params.revalidate && !!window && !revalidateDisabled) {
       const revalidationKey = _getRevalidationKey(params)
       const lastRevalidateTime = lastRevalidateTimeMap[revalidationKey] || 0
       if (params.revalidate === 'never' && !!lastRevalidateTime) {

@@ -26,6 +26,7 @@ export default ({
   return ({ dispatch, getState }) => next => action => {
     if (action[CALL_API]) {
       return dispatch({
+        isNativeCallApi: true,
         [CHAIN_API]: [
           () => action
         ]
@@ -38,8 +39,8 @@ export default ({
 
     return new Promise((resolve, reject) => {
       const promiseCreators = action[CHAIN_API].map((createCallApiAction) => {
-
         return createRequestPromise({
+          revalidateDisabled: !action.isNativeCallApi,
           timeout,
           generateDefaultParams,
           createCallApiAction,

@@ -210,9 +210,10 @@ describe('createRequestPromise', () => {
       jest.clearAllMocks()
     })
 
-    function createRequest({ revalidate } = {}){
+    function createRequest({ revalidate, revalidateDisabled } = {}){
       extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate})
       createRequestPromise({
+        revalidateDisabled,
         timeout,
         generateDefaultParams,
         createCallApiAction,
@@ -245,6 +246,19 @@ describe('createRequestPromise', () => {
 
       await createRequest({ revalidate })
       expect(axios).not.toHaveBeenCalled()
+    })
+
+    it('always send request if revalidateDisabled = true', async () => {
+      const revalidateDisabled = true
+      const revalidate = 'never'
+      await createRequest({ revalidate, revalidateDisabled })
+      expect(axios).toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (6 * 1000))
+
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
     })
 
     it('always send request if window does not exist', async () => {
