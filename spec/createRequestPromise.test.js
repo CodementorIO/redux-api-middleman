@@ -1,7 +1,9 @@
 import Promise from 'es6-promise'
-import { CALL_API } from '../src'
+import { CALL_API, CHAIN_API } from '../src'
 import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'
+import MockDate from 'mockdate'
+import * as utils from '../src/utils'
 
 jest.mock('axios')
 jest.mock('../src/log')
@@ -187,6 +189,96 @@ describe('createRequestPromise', () => {
             getState
           })
         })
+    })
+  })
+
+  describe('revalidate behavior', () => {
+    const currentime = 1579508700000
+    let path, testSetCount = 0
+
+    beforeEach(() => {
+      testSetCount++
+      path = `/the-path${testSetCount}`
+      MockDate.set(currentime)
+      utils.window = {}
+      mockParams = {
+        method: 'get',
+        path,
+        sendingType: 'sendingType',
+        camelizeResponse: true
+      }
+      jest.clearAllMocks()
+    })
+
+    function createRequest({ revalidate } = {}){
+      extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate})
+      createRequestPromise({
+        timeout,
+        generateDefaultParams,
+        createCallApiAction,
+        getState,
+        dispatch,
+        errorInterceptor,
+        extractParams,
+        maxReplayTimes
+      })(mockPrevBody)
+    }
+
+    it('sends request every calls when revalidate is undefined', async () => {
+      await createRequest()
+      expect(axios).toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (6 * 1000))
+
+      await createRequest()
+      expect(axios).toHaveBeenCalled()
+    })
+
+    it('sends request only for the first call when revalidate is "never"', async () => {
+      const revalidate = 'never'
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (6 * 1000))
+
+      await createRequest({ revalidate })
+      expect(axios).not.toHaveBeenCalled()
+    })
+
+    it('always send request if window does not exist', async () => {
+      utils.window = null
+      const revalidate = 'never'
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (6 * 1000))
+
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
+    })
+
+    it('sends request only after revalidate time when revalidate is defined', async () => {
+      const revalidate = 5
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (1 * 1000))
+      await createRequest({ revalidate })
+      expect(axios).not.toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (3 * 1000))
+      await createRequest({ revalidate })
+      expect(axios).not.toHaveBeenCalled()
+
+      jest.clearAllMocks()
+      MockDate.set(currentime + (6 * 1000))
+      await createRequest({ revalidate })
+      expect(axios).toHaveBeenCalled()
     })
   })
 })
