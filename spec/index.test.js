@@ -535,9 +535,9 @@ describe('Middleware::Api', () => {
       jest.spyOn(createRequestPromise, 'default').mockReturnValue(jest.fn())
       jest.clearAllMocks()
     })
-    it('calls createRequestPromise with revalidateDisabled = true if action.isNativeCallApi = false', async () => {
+    it('calls createRequestPromise with revalidateDisabled = true if action.revalidateDisabled = true', async () => {
       const action = {
-        isNativeCallApi: false,
+        revalidateDisabled: true,
         [CHAIN_API]: [
           () => ({ [CALL_API]: {} })
         ]
@@ -545,9 +545,9 @@ describe('Middleware::Api', () => {
       await apiMiddleware({ dispatch, getState })(next)(action)
       expect(createRequestPromise.default.mock.calls[0][0].revalidateDisabled).toBe(true)
     })
-    it('calls createRequestPromise with revalidateDisabled = false if action.isNativeCallApi = true', async () => {
+    it('calls createRequestPromise with revalidateDisabled = false if action.revalidateDisabled = false', async () => {
       const action = {
-        isNativeCallApi: true,
+        revalidateDisabled: false,
         [CHAIN_API]: [
           () => ({ [CALL_API]: {} })
         ]
@@ -555,10 +555,12 @@ describe('Middleware::Api', () => {
       await apiMiddleware({ dispatch, getState })(next)(action)
       expect(createRequestPromise.default.mock.calls[0][0].revalidateDisabled).toBe(false)
     })
-    it('dispatches CHAIN_API with isNativeCallApi = true if action type is CALL_API', async () => {
-      const action = { [CALL_API]: {} }
+    it('dispatches CHAIN_API with revalidateDisabled = true if action type is CALL_API', async () => {
+      const action = { [CHAIN_API]: [
+        () => ({ [CALL_API]: {} })
+      ]}
       await apiMiddleware({ dispatch, getState })(next)(action)
-      expect(dispatch.mock.calls[0][0]).toMatchObject({ isNativeCallApi: true })
+      expect(createRequestPromise.default.mock.calls[0][0].revalidateDisabled).toBe(true)
     })
   })
 })
