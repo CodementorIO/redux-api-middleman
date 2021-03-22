@@ -117,6 +117,7 @@ export default function ({
 
       function prepareErrorPayload ({ error, camelize }) {
         const res = error.response || {}
+        res.config = error.config
         if (camelize) {
           res.data = camelizeKeys(res.data)
         }

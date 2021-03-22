@@ -8,22 +8,23 @@ import * as utils from '../src/utils'
 jest.mock('axios')
 jest.mock('../src/log')
 
-const getMockAxiosPromise = ({ error } = {}) => {
+const getMockAxiosPromise = ({ error, config } = {}) => {
   return new Promise((resolve, reject) => {
     if (error) {
-      process.nextTick(() => reject(new Error({
+      reject({
+        config,
         response: {
           data: {
             key_1: 'val_1'
           }
         }
-      })))
+      })
     } else {
-      process.nextTick(() => resolve({
+      resolve({
         data: {
           key_1: 'val_1'
         }
-      }))
+      })
     }
   })
 }
@@ -160,14 +161,17 @@ describe('createRequestPromise', () => {
   })
 
   describe('when axios catches error', () => {
+    let config
     beforeEach(() => {
-      axios.mockReturnValue(getMockAxiosPromise({ error: true }))
+      config = { key: 'value' }
+      axios.mockReturnValue(getMockAxiosPromise({ error: true, config }))
     })
-    it('should call errorInterceptor', () => {
+
+    it('should call errorInterceptor', async () => {
       const errorInterceptor = jest.fn(({ proceedError }) => {
         proceedError()
       })
-      createRequestPromise({
+      await createRequestPromise({
         timeout,
         generateDefaultParams,
         createCallApiAction,
@@ -179,14 +183,16 @@ describe('createRequestPromise', () => {
       })(mockPrevBody)
         .catch(() => {
           expect(errorInterceptor).toHaveBeenCalledTimes(1)
-          expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
+          expect(errorInterceptor.mock.calls[0][0]).toEqual({
             err: {
+              config,
               data: {
                 key1: 'val_1'
               }
             },
-            dispatch,
-            getState
+            getState,
+            proceedError: expect.any(Function),
+            replay: expect.any(Function)
           })
         })
     })
