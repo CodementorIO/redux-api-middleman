@@ -165,19 +165,19 @@ export default function ({
   }
 }
 
-function _getRevalidationKey(actionObj) {
+function _getRevalidationKey (actionObj) {
   const {
     method,
     path,
     url,
     params,
-    data,
+    data
   } = actionObj
   return JSON.stringify({
     method,
     path,
     url,
     params,
-    data,
+    data
   })
 }

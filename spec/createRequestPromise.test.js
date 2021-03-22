@@ -1,5 +1,5 @@
 import Promise from 'es6-promise'
-import { CALL_API, CHAIN_API } from '../src'
+import { CALL_API } from '../src'
 import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'
 import MockDate from 'mockdate'
@@ -11,20 +11,20 @@ jest.mock('../src/log')
 const getMockAxiosPromise = ({ error, config } = {}) => {
   return new Promise((resolve, reject) => {
     if (error) {
-      reject({
-        config,
-        response: {
-          data: {
-            key_1: 'val_1'
-          }
-        }
-      })
-    } else {
-      resolve({
+      const _error = new Error('Mock error')
+      _error.config = config
+      _error.response = {
         data: {
           key_1: 'val_1'
         }
-      })
+      }
+      process.nextTick(() => reject(_error))
+    } else {
+      process.nextTick(() => resolve({
+        data: {
+          key_1: 'val_1'
+        }
+      }))
     }
   })
 }
@@ -200,7 +200,7 @@ describe('createRequestPromise', () => {
 
   describe('revalidate behavior', () => {
     const currentime = 1579508700000
-    let path, testSetCount = 0
+    let path; let testSetCount = 0
 
     beforeEach(() => {
       testSetCount++
@@ -216,8 +216,8 @@ describe('createRequestPromise', () => {
       jest.clearAllMocks()
     })
 
-    function createRequest({ revalidate, revalidateDisabled } = {}){
-      extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate})
+    function createRequest ({ revalidate, revalidateDisabled } = {}) {
+      extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate })
       createRequestPromise({
         revalidateDisabled,
         timeout,
