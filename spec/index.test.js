@@ -7,9 +7,9 @@ import createApiMiddleware, {
   CHAIN_API
 } from '../src'
 
-const createRequestPromise = require('../src/createRequestPromise')
-
 import * as utils from '../src/utils'
+
+const createRequestPromise = require('../src/createRequestPromise')
 
 jest.mock('../src/log', () => ({
   error: jest.fn()
@@ -558,7 +558,7 @@ describe('Middleware::Api', () => {
     it('dispatches CHAIN_API with revalidateDisabled = true if action type is CALL_API', async () => {
       const action = { [CHAIN_API]: [
         () => ({ [CALL_API]: {} })
-      ]}
+      ] }
       await apiMiddleware({ dispatch, getState })(next)(action)
       expect(createRequestPromise.default.mock.calls[0][0].revalidateDisabled).toBe(true)
     })

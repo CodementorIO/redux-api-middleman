@@ -1,5 +1,5 @@
 import Promise from 'es6-promise'
-import { CALL_API, CHAIN_API } from '../src'
+import { CALL_API } from '../src'
 import createRequestPromise from '../src/createRequestPromise'
 import axios from 'axios'
 import MockDate from 'mockdate'
@@ -8,16 +8,17 @@ import * as utils from '../src/utils'
 jest.mock('axios')
 jest.mock('../src/log')
 
-const getMockAxiosPromise = ({ error } = {}) => {
+const getMockAxiosPromise = ({ error, config } = {}) => {
   return new Promise((resolve, reject) => {
     if (error) {
-      process.nextTick(() => reject(new Error({
-        response: {
-          data: {
-            key_1: 'val_1'
-          }
+      const _error = new Error('Mock error')
+      _error.config = config
+      _error.response = {
+        data: {
+          key_1: 'val_1'
         }
-      })))
+      }
+      process.nextTick(() => reject(_error))
     } else {
       process.nextTick(() => resolve({
         data: {
@@ -160,14 +161,17 @@ describe('createRequestPromise', () => {
   })
 
   describe('when axios catches error', () => {
+    let config
     beforeEach(() => {
-      axios.mockReturnValue(getMockAxiosPromise({ error: true }))
+      config = { key: 'value' }
+      axios.mockReturnValue(getMockAxiosPromise({ error: true, config }))
     })
-    it('should call errorInterceptor', () => {
+
+    it('should call errorInterceptor', async () => {
       const errorInterceptor = jest.fn(({ proceedError }) => {
         proceedError()
       })
-      createRequestPromise({
+      await createRequestPromise({
         timeout,
         generateDefaultParams,
         createCallApiAction,
@@ -179,14 +183,16 @@ describe('createRequestPromise', () => {
       })(mockPrevBody)
         .catch(() => {
           expect(errorInterceptor).toHaveBeenCalledTimes(1)
-          expect(errorInterceptor.mock.calls[0][0]).toMatchObject({
+          expect(errorInterceptor.mock.calls[0][0]).toEqual({
             err: {
+              config,
               data: {
                 key1: 'val_1'
               }
             },
-            dispatch,
-            getState
+            getState,
+            proceedError: expect.any(Function),
+            replay: expect.any(Function)
           })
         })
     })
@@ -194,7 +200,7 @@ describe('createRequestPromise', () => {
 
   describe('revalidate behavior', () => {
     const currentime = 1579508700000
-    let path, testSetCount = 0
+    let path; let testSetCount = 0
 
     beforeEach(() => {
       testSetCount++
@@ -210,8 +216,8 @@ describe('createRequestPromise', () => {
       jest.clearAllMocks()
     })
 
-    function createRequest({ revalidate, revalidateDisabled } = {}){
-      extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate})
+    function createRequest ({ revalidate, revalidateDisabled } = {}) {
+      extractParams = jest.fn().mockReturnValue({ ...mockParams, revalidate })
       createRequestPromise({
         revalidateDisabled,
         timeout,
